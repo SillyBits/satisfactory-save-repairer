@@ -41,9 +41,10 @@ class Callback:
 			self.bind(target, func)
 		self.__interval = interval
 
-	def __del__(self):
-		if self.__target:
-			self.unbind()
+	#def __del__(self):
+	#	if self.__target:
+	#		self.unbind()
+	#-> causes an exception: TypeError: 'NoneType' object is not iterable
 
 
 	def bind(self, target, func):

@@ -60,7 +60,7 @@ class Savegame:
 		self.__cb_start(reader)
 
 		try:		
-			self.Header = Savegame.Header().read(reader)
+			self.Header = Property.Header().read(reader)
 			self.__cb_update(reader)
 			
 			self.Objects = []
@@ -89,7 +89,7 @@ class Savegame:
 			self.Collected = []
 			count = reader.readInt()
 			for i in range(count):
-				self.Collected.append(Savegame.Collected().read(reader))
+				self.Collected.append(Property.Collected().read(reader))
 				self.__cb_update(reader)
 	
 			self.Missing = reader.readNByte(reader.Size - reader.Pos)
@@ -118,46 +118,3 @@ class Savegame:
 		writer = Writer.Writer(filename, callback)
 		#...
 		del writer
-		
-
-	class Header:
-		#@property
-		#def Type(self): return self.__class__
-		
-		def read(self, reader):
-			self.Type = reader.readInt()
-			self.Version = reader.readInt()
-			self.BuildVersion = reader.readInt()
-			self.MapName = reader.readStr()
-			self.MapOptions = reader.readStr()
-			self.SessionName = reader.readStr()
-			self.PlayDuration = reader.readInt() # in seconds
-			self.SaveDateTime = reader.readLong()
-			self.Visibility = reader.readByte() 
-			return self
-			'''
-			to convert SaveDateTime to a unix timestamp use:
-				saveDateSeconds = SaveDateTime / 10000000
-				print(saveDateSeconds-62135596800)
-			see https://stackoverflow.com/a/1628018
-			'''
-
-	class Collected: #TODO: Find correct name, if any
-		@property
-		def Type(self): return self.__class__
-		
-		def read(self, reader):
-			self.LevelName = reader.readStr()
-			self.PathName = reader.readStr()
-			return self
-
-		@property
-		def Label(self):
-			return '[COLL] ' + self.PathName
-
-		@property
-		def Childs(self):
-			return None #{ 'Entity': self.Entity }
-
-
-

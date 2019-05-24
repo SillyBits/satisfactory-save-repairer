@@ -2,7 +2,44 @@
 import os
 
 
-class Property:
+'''
+To allow for abstract access to property values
+'''
+class Accessor:
+
+	def Keys(self):
+		if not hasattr(self, '__keys'):
+			# Create new cache of keys avail
+			self.__keys = []
+			for member in dir(self):
+				if member.startswith('_'):
+					continue # Skip private members
+				value = self[member]
+				if callable(value):
+					continue # Skip callables
+				self.__keys.append(member)
+		return self.__keys
+
+	def __getitem__(self, key):
+		v = object.__getattribute__(self, key)
+		if hasattr(v, '__get__'):
+			return v.__get__(None, self)
+		return v
+
+	def __setitem__(self, key, value):
+		raise ValueError # Not allowed yet
+		v = object.__getattribute__(self, key)
+		if hasattr(v, '__set__'):
+			v.__set__(None, self, value)
+		else:
+			v = value
+
+
+'''
+Actual save values following
+'''
+
+class Property(Accessor):
 	
 	Name = None
 	Length = 0
@@ -81,7 +118,7 @@ class Property:
 			return self.message + "\n" + Exception.__str__(self, *args, **kwargs)
 
 
-class PropertyList:
+class PropertyList(Accessor):
 	@property 
 	def Type(self): pass #return self.__class__
 
@@ -161,7 +198,46 @@ class StrProperty(Property):
 '''
 Complex types
 '''
+
+class Header(Accessor):
+	#@property
+	#def Type(self): return self.__class__
+
+	def read(self, reader):
+		self.Type = reader.readInt()
+		self.Version = reader.readInt()
+		self.BuildVersion = reader.readInt()
+		self.MapName = reader.readStr()
+		self.MapOptions = reader.readStr()
+		self.SessionName = reader.readStr()
+		self.PlayDuration = reader.readInt() # in seconds
+		self.SaveDateTime = reader.readLong()
+		self.Visibility = reader.readByte()
+		return self
+		'''
+		to convert SaveDateTime to a unix timestamp use:
+			saveDateSeconds = SaveDateTime / 10000000
+			print(saveDateSeconds-62135596800)
+		see https://stackoverflow.com/a/1628018
+		'''
+
+class Collected(Accessor): #TODO: Find correct name, if any
+	@property
+	def Type(self): return self.__class__
 	
+	def read(self, reader):
+		self.LevelName = reader.readStr()
+		self.PathName = reader.readStr()
+		return self
+
+	@property
+	def Label(self):
+		return '[COLL] ' + self.PathName
+
+	@property
+	def Childs(self):
+		return None #{ 'Entity': self.Entity }
+
 class StructProperty(Property):
 	@property 
 	def Type(self): return self.__class__
@@ -200,7 +276,7 @@ class StructProperty(Property):
 			self.Value.append(inst.read(reader))
 		return self
 
-class Vector:
+class Vector(Accessor):
 	@property 
 	def Type(self): return self.__class__
 	
@@ -220,7 +296,7 @@ class Rotator(Vector): pass
 	#	self.Z = reader.readFloat()
 	#	return self
 
-class Box:
+class Box(Accessor):
 	@property 
 	def Type(self): return self.__class__
 	
@@ -234,7 +310,7 @@ class Box:
 		self.IsValid = reader.readByte()#TODO: readBool?
 		return self
 
-class Color: 
+class Color(Accessor):
 	@property 
 	def Type(self): return self.__class__
 	
@@ -260,7 +336,7 @@ class Transform(PropertyList):
 	@property 
 	def Type(self): return self.__class__
 	
-class Quat:
+class Quat(Accessor):
 	@property 
 	def Type(self): return self.__class__
 	
@@ -286,7 +362,7 @@ class InventoryStack(PropertyList):
 	def read(self, reader):
 		return PropertyList.read(self, reader)
 
-class InventoryItem:
+class InventoryItem(Accessor):
 	#TODO: Might also be some PropertyList? Investigate
 	@property 
 	def Type(self): return self.__class__
@@ -520,7 +596,7 @@ class NamedEntity(Entity):
 			self.PathName = reader.readStr()
 			return self
 
-class Object:
+class Object(Accessor):
 	@property
 	def Type(self): return 0
 
@@ -543,7 +619,7 @@ class Object:
 		length = reader.readInt()
 		self.Entity = Entity().read(reader, length)
 
-class Actor:
+class Actor(Accessor):
 	@property
 	def Type(self): return 1
 

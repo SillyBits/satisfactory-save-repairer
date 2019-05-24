@@ -61,17 +61,19 @@ class MainFrame(wx.Frame):
 		self.menuBar = wx.MenuBar()
 		self.SetMenuBar(self.menuBar)
 
-		def _add(menu, label, tooltip=None, func=None, id=wx.ID_ANY):
+		def _add(menu, label, tooltip=None, func=None, enabled=True, id=wx.ID_ANY):
 			item = menu.Append(id, label, tooltip)
-			if func: self.Bind(wx.EVT_MENU, func, item)
+			item.Enable(enabled)
+			if func: 
+				self.Bind(wx.EVT_MENU, func, item)
 			return item
 
 		filemenu = wx.Menu()
 		self.menuBar.Append(filemenu, "&File")
-		_add(filemenu, "&Open...", "Opens a save game", self.onFileOpen)
-		_add(filemenu, "&Save", "Saves changes", self.onFileSave)
-		_add(filemenu, "Save &as...", "Saves changes into a different file", self.onFileSaveAs)
-		_add(filemenu, "C&lose", "Closes save, will prompt if pending changes detected", self.onFileClose)
+		_add(filemenu, "&Open...\tCtrl+O", "Opens a save game", self.onFileOpen)
+		_add(filemenu, "&Save\tCtrl+S", "Saves changes", self.onFileSave, enabled=False)
+		_add(filemenu, "Save &as...", "Saves changes into a different file", self.onFileSaveAs, enabled=False)
+		_add(filemenu, "C&lose\tCtrl+W", "Closes save, will prompt if pending changes detected", self.onFileClose, enabled=False)
 		filemenu.AppendSeparator()
 		_add(filemenu, "E&xit", "Terminate program", self.onFileExit, wx.ID_EXIT)
 
@@ -93,7 +95,7 @@ class MainFrame(wx.Frame):
 		self.main_splitter = wx.SplitterWindow(parent=self, style=wx.SP_3D|wx.SP_NO_XP_THEME|wx.SP_LIVE_UPDATE)
 		self.main_splitter.SetSashGravity(0.5)
 		self.main_splitter.SetSashSize(5)
-		self.treeview = TreeView.TreeView(self.main_splitter)
+		self.treeview = TreeView.TreeView(self.main_splitter, self.update_pane)
 		self.infopane = wx.StaticText(parent=self.main_splitter, \
 									label="Hello there! I'm a placeholder :D", size=(300,600))
 		self.main_splitter.SplitVertically(self.treeview, self.infopane, 0)
@@ -120,6 +122,9 @@ class MainFrame(wx.Frame):
 		# Tk.update_idletasks(self)
 		pass
 	
+	def update_pane(self, text):
+		self.infopane.SetLabel(text)
+
 
 	'''
 	Menu handlers
