@@ -7,6 +7,7 @@ import sys
 import os
 import threading
 from time import sleep
+from datetime import datetime
 
 import wx
 
@@ -22,11 +23,24 @@ from UI \
 
 class Application(wx.App):
 	def __init__(self):
-		super().__init__(False, useBestVisual=True)
-
-		# Do additional groundwork
 		self.__path = os.path.dirname(sys.argv[0])
 
+		# For distribution only!
+		# -> Create log file, and rename existing one as backup
+		logpath = os.path.join(self.__path, "logs")
+		if not os.path.isdir(logpath):
+			os.mkdir(logpath)
+		self.__logfile = os.path.join(logpath, "SatisfactorySaveChecker.log")
+		if os.path.isfile(self.__logfile):
+			mtime = datetime.fromtimestamp(os.path.getmtime(self.__logfile))
+			backup = "SatisfactorySaveChecker-" + mtime.strftime("%Y%m%d-%H%M%S") + ".log"
+			os.rename(self.__logfile, os.path.join(logpath, backup))
+		super().__init__(True, filename=self.__logfile, useBestVisual=True)
+		# For development only!
+		# -> Let IDE show messages in its output pane
+		#super().__init__(False, useBestVisual=True)
+
+		# Do additional groundwork
 		Lang.Lang.load(None, os.path.join(self.Path, "Resources"))
 		
 		wx.FileSystem.AddHandler(wx.MemoryFSHandler())
@@ -34,7 +48,17 @@ class Application(wx.App):
 		wx.Image.AddHandler(wx.PNGHandler())
 
 	@property
-	def Path(self): return self.__path
+	def Path(self): 
+		return self.__path
+
+
+def Log(text:str, add_ts:bool=True, add_newline:bool=True):
+	if add_ts:
+		text = "[{}] ".format(datetime.now()) + text
+	if add_newline:
+		text += "\n"
+	print(text, end='')
+
 
 
 class MainFrame(wx.Frame):
@@ -43,20 +67,16 @@ class MainFrame(wx.Frame):
 	
 
 	def __init__(self, parent=None):
+		Log("Starting up...")
 		super().__init__(parent, title="", size=(800,480))
+		self.Bind(wx.EVT_CLOSE, self.onClose)
 
 		file = os.path.join(wx.App.Get().Path, "Resources/Logo-128x128.png")
 		self.Icon = wx.Icon(file)
 		
-		#self.pack(fill=BOTH, expand=Y)
-		#self.master.title(self.get_title())
-		#self.master.minsize(640,480)
-		#self.columnconfigure(0, weight=1, minsize=400)
-		#self.rowconfigure(0, weight=1, minsize=300)
 		self.create_ui()
 		
 		# Finally, update UI
-		#self.update_extract_location()
 		self.update_ui()
 		#self.update_tree()
 
@@ -182,6 +202,7 @@ class MainFrame(wx.Frame):
 			#- Disable UI until done
 			
 			def _t():
+				Log("Loading file: " + new_file)
 				# First of all, load da save			
 				l_callback = Callback.Callback(self, self.loader_callback)
 				self.currFile.load(l_callback)
@@ -210,6 +231,7 @@ class MainFrame(wx.Frame):
 				sleep(0.0001)				
 				# Before exiting, send an update request
 				#self.update_ui()
+				Log("Finished loading")
 
 			# Do the hard work in a background thread
 			t = threading.Thread(target=_t)
@@ -235,6 +257,11 @@ class MainFrame(wx.Frame):
 		#	sleep(0.05)
 		self.onFileClose(None)
 		self.Close(True)
+		
+		
+	def onClose(self, event):
+		Log("Shutting down...")
+		event.Skip()
 			
 
 	#def onEditOptions(self, event):
@@ -372,6 +399,7 @@ class MainFrame(wx.Frame):
 		# Done dealing with main frame, rest of duties is up to tree view itself
 		self.treeview.process_event(event)
 	'''	
+	# Instead of building tree structure, we're generating an ASCII-based report
 	def result_callback(self, event):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
@@ -388,9 +416,6 @@ class MainFrame(wx.Frame):
 			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
-
-	
-
 	
 	def __cb_results_start(self, total):
 		if self.__results_callback: 
@@ -408,6 +433,7 @@ class MainFrame(wx.Frame):
 		self.__results_callback = callback
 		self.__results_count = 0
 		self.__indent = 0
+		self.__error_count = 0
 		
 		total = self.currFile.TotalElements		
 		self.__cb_results_start(total)
@@ -418,11 +444,16 @@ class MainFrame(wx.Frame):
 		for obj in self.currFile.Collected:
 			self.__show_results(obj)
 
+		if not self.__error_count:
+			self.__cb_results_update(_("No errors found"))
+		else:
+			self.__cb_results_update("\n\n"+_("A total of {} errors found!").format(self.__error_count))
 		self.__cb_results_end()
 
 	def __show_results(self, obj):
 		self.__results_count += 1
 		if obj.HasErrors:
+			self.__error_count += 1
 			s = str(obj) + "\n"
 			for e in obj.Errors:
 				s += ("\t"*self.__indent) + e + "\n"  

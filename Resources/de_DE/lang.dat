@@ -25,8 +25,9 @@
 	"Has one or more errors": "Ein oder mehrere Fehler gefunden",
 	"Generating report ...": "Erzeuge Bericht ...",
 	"Done generating": "Berichterzeugung abgeschlossen",
-	"<none>": "<leer>",
-	
-	
+	"No errors found": "Keine Fehler gefunden",
+	"A total of {} errors found!": "Insgesamt {} Fehler gefunden!",
+
+	"<none>": "<leer>",	
 	"": ""
 }

@@ -21,8 +21,8 @@ Spielstand-Editor entfernt werden.<br/>
 <br/>
 Es wurde komplett in Python geschrieben und nutzt wxPython für die Nutzeroberfläche.<br/>
 Sein Quellcode kann unter 
-<a href='https://github.com/SillyBits/satisfactory-savegame-repairer/checking-only'>
-https://github.com/SillyBits/satisfactory-savegame-repairer/checking-only</a>
+<a href='https://github.com/SillyBits/satisfactory-save-repairer/tree/checking-only'>
+https://github.com/SillyBits/satisfactory-save-repairer/tree/checking-only</a>
 kostenlos heruntergeladen werden.<br/>
 Auf <a href='https://www.satisfactory-forum.de'>https://www.satisfactory-forum.de</a>
 besteht die Möglichkeit eine ausführbare Anwendung herunterzuladen.<br/>

@@ -3,6 +3,7 @@ All the panels needed for displaying savegame data
 """
 
 import wx
+import wx.richtext
 
 
 """
@@ -53,13 +54,20 @@ class DetailsPanel(wx.HVScrolledWindow):
 		if self.__mode != DetailsPanel.MODE_TEXT:
 			self.__delete_all()
 			wx.StaticText(self, label="")
+			#ctrl = wx.TextCtrl(self, style=wx.TE_READONLY|wx.TE_NOHIDESEL|wx.TE_MULTILINE|wx.TE_RICH2)#|wx.HSCROLL)
+			#ctrl.HideNativeCaret()
+			#ctrl = wx.richtext.RichTextCtrl(self, style=wx.richtext.RE_MULTILINE|wx.richtext.RE_READONLY)
+			#ctrl.Size = self.ClientSize
+			# Sadfully, caret can't be suppressed with those two controls, so no sel&copy :-/
 			self.__mode = DetailsPanel.MODE_TEXT
 
 		ctrl = self.GetChildren()[0]
 		if append:
 			ctrl.SetLabel(ctrl.GetLabel() + "\n" + text)
+			#ctrl.Value += "\r\n" + text
 		else:
 			ctrl.SetLabel(text)
+			#ctrl.Value = text
 
 	def __show_prop(self, prop):
 		self.__delete_all()

@@ -2,3 +2,6 @@ __pycache__
 __unused
 build
 dist
+virt_env
+logs
+SatisfactorySaveChecker.spec

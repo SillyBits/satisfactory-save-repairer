@@ -22,8 +22,8 @@ removed using your favorite savegame editor.<br/>
 It's solely written in Python (v3.5.3 as of now) and uses wxPython (v4.0.5 currently) 
 for all UI-related tasks.<br/>
 It's open source and available for free at 
-<a href='https://github.com/SillyBits/satisfactory-savegame-repairer/checking-only'>
-https://github.com/SillyBits/satisfactory-savegame-repairer/checking-only</a>.<br/>
+<a href='https://github.com/SillyBits/satisfactory-save-repairer/tree/checking-only'>
+https://github.com/SillyBits/satisfactory-save-repairer/tree/checking-only</a>.<br/>
 You can also get ready-made executables in the download section at 
 <a href='https://www.satisfactory-forum.de'>https://www.satisfactory-forum.de</a>.<br/>
 <br/>
