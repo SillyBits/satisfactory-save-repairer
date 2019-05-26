@@ -10,12 +10,11 @@ from time import sleep
 
 import wx
 
-
 from Savegame \
 	import Savegame, Validator
 	 
 from Util \
-	import Options, Callback
+	import Options, Callback, Lang
 
 from UI \
 	import OptionsDlg, AboutDlg, TreeView, DetailsPanel
@@ -24,10 +23,14 @@ from UI \
 class Application(wx.App):
 	def __init__(self):
 		super().__init__(False, useBestVisual=True)
-		
+
 		# Do additional groundwork
 		self.__path = os.path.dirname(sys.argv[0])
-		wx.FileSystem.AddHandler(wx.MemoryFSHandler()) 
+
+		Lang.Lang.load(None, os.path.join(self.Path, "Resources"))
+		
+		wx.FileSystem.AddHandler(wx.MemoryFSHandler())
+
 		wx.Image.AddHandler(wx.PNGHandler())
 
 	@property
@@ -40,7 +43,7 @@ class MainFrame(wx.Frame):
 	
 
 	def __init__(self, parent=None):
-		super().__init__(parent, title="Satisfactory savegame repair", size=(800,480))
+		super().__init__(parent, title="", size=(800,480))
 
 		file = os.path.join(wx.App.Get().Path, "Resources/Logo-128x128.png")
 		self.Icon = wx.Icon(file)
@@ -83,21 +86,21 @@ class MainFrame(wx.Frame):
 			return item
 
 		filemenu = wx.Menu()
-		self.menuBar.Append(filemenu, "&File")
-		self.menu_file_open = _add(filemenu, "&Open...\tCtrl+O", "Opens a save game", self.onFileOpen)
-		self.menu_file_save = _add(filemenu, "&Save\tCtrl+S", "Saves changes", self.onFileSave)
-		self.menu_file_save_as = _add(filemenu, "Save &as...", "Saves changes into a different file", self.onFileSaveAs)
-		self.menu_file_close = _add(filemenu, "C&lose\tCtrl+W", "Closes save, will prompt if pending changes detected", self.onFileClose)
+		self.menuBar.Append(filemenu, _("&File"))
+		self.menu_file_open = _add(filemenu, _("&Open...\tCtrl+O"), _("Opens a save game"), self.onFileOpen)
+		#self.menu_file_save = _add(filemenu, _("&Save\tCtrl+S"), _("Saves changes"), self.onFileSave)
+		#self.menu_file_save_as = _add(filemenu, _("Save &as..."), _("Saves changes into a different file"), self.onFileSaveAs)
+		self.menu_file_close = _add(filemenu, _("C&lose\tCtrl+W"), _("Closes save"), self.onFileClose)
 		filemenu.AppendSeparator()
-		_add(filemenu, "E&xit", "Terminate program", self.onFileExit, wx.ID_EXIT)
+		_add(filemenu, _("E&xit"), _("Terminate program"), self.onFileExit, wx.ID_EXIT)
 
-		editmenu = wx.Menu()
-		self.MenuBar.Append(editmenu, "E&dit")
-		_add(editmenu, "&Options...", "OPens options dialog", self.onEditOptions)
+		#editmenu = wx.Menu()
+		#self.MenuBar.Append(editmenu, _("E&dit"))
+		#_add(editmenu, _("&Options..."), _("Opens options dialog"), self.onEditOptions)
 		
 		helpmenu = wx.Menu()
-		self.menuBar.Append(helpmenu, "&Help")
-		_add(helpmenu, "&About", "Information about this program", self.onHelpAbout, wx.ID_ABOUT)
+		self.menuBar.Append(helpmenu, _("&Help"))
+		_add(helpmenu, _("&About..."), _("Information about this program"), self.onHelpAbout, wx.ID_ABOUT)
 
 	def create_toolbars(self, parent):
 		#TODO: Add 'Next' + 'Prev' error buttons to navigate in tree
@@ -107,6 +110,7 @@ class MainFrame(wx.Frame):
 		self.statusbar = self.CreateStatusBar(style=wx.STB_DEFAULT_STYLE)
 
 	def create_content(self, parent):
+		'''
 		self.main_splitter = wx.SplitterWindow(parent=self, style=wx.SP_3D|wx.SP_NO_XP_THEME|wx.SP_LIVE_UPDATE)
 		self.main_splitter.SetSashGravity(0.5)
 		self.main_splitter.SetSashSize(5)
@@ -115,6 +119,10 @@ class MainFrame(wx.Frame):
 		self.infopanel = DetailsPanel.DetailsPanel(self.main_splitter)
 		self.treeview = TreeView.TreeView(self.main_splitter, self.infopanel)
 		self.main_splitter.SplitVertically(self.treeview, self.infopanel, 0)
+		'''
+		self.infopanel = DetailsPanel.DetailsPanel(self)
+		self.infopanel.SetSize(size=self.ClientSize)
+
 
 
 	'''
@@ -126,11 +134,14 @@ class MainFrame(wx.Frame):
 		
 		# Be more precise on menu item states
 		has_save = (self.currFile != None)
-		has_changes = False
+		#has_changes = False
 		self.menu_file_open.Enable(True)
-		self.menu_file_save.Enable(has_save & has_changes)  		
-		self.menu_file_save_as.Enable(has_save & has_changes)  		
-		self.menu_file_close.Enable(has_save)  		
+		#self.menu_file_save.Enable(has_save & has_changes)  		
+		#self.menu_file_save_as.Enable(has_save & has_changes)  		
+		self.menu_file_close.Enable(has_save)
+		
+		if not has_save:
+			self.update_panel("")
 	
 	def update_panel(self, text, append=False):
 		self.infopanel.update(text, append)
@@ -154,8 +165,9 @@ class MainFrame(wx.Frame):
 
 		#new_file = os.path.join(path, "testfile.sav")
 		new_file = ''
-		dlg = wx.FileDialog(self, "Select savegame to load", path, "",\
-							"Savegames (*.sav)|*.sav|All files (*.*)|*.*", wx.FD_OPEN)
+		dlg = wx.FileDialog(self, _("Select savegame to load"), path, "",\
+							_("Savegames") + " (*.sav)|*.sav|" + _("All files") + " (*.*)|*.*",\
+							wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
 			new_file = os.path.join(dlg.Directory, dlg.Filename)
 			#wx.MessageBox("Filename is: "+new_file, "File open")
@@ -173,20 +185,29 @@ class MainFrame(wx.Frame):
 				# First of all, load da save			
 				l_callback = Callback.Callback(self, self.loader_callback)
 				self.currFile.load(l_callback)
+				sleep(0.0001)
 				del l_callback
 				sleep(0.0001)
 				# Next up, check for errors
 				v_callback = Callback.Callback(self, self.checker_callback, 0)
 				validator = Validator.Validator(self.currFile)
 				validator.validate(v_callback)
+				sleep(0.0001)
 				del validator
 				del v_callback
 				sleep(0.0001)
+				'''
 				# Finally, present some tree contents
 				b_callback = Callback.Callback(self, self.builder_callback, 0)
 				self.treeview.setup(self.currFile, b_callback)
-				del b_callback
 				sleep(0.0001)
+				del b_callback
+				'''
+				r_callback = Callback.Callback(self, self.result_callback, 0)
+				self.show_results(r_callback)
+				sleep(0.0001)
+				del r_callback
+				sleep(0.0001)				
 				# Before exiting, send an update request
 				#self.update_ui()
 
@@ -194,14 +215,15 @@ class MainFrame(wx.Frame):
 			t = threading.Thread(target=_t)
 			t.start()
 			
-	def onFileSave(self, event):
-		pass
+	#def onFileSave(self, event):
+	#	pass
 			
-	def onFileSaveAs(self, event):
-		pass
+	#def onFileSaveAs(self, event):
+	#	pass
 			
 	def onFileClose(self, event):
-		self.treeview.DeleteAllItems()
+		#self.treeview.DeleteAllItems()
+		self.update_panel("")
 		#TODO: Check change state before closing
 		self.currFile = None
 		self.update_ui()
@@ -215,11 +237,11 @@ class MainFrame(wx.Frame):
 		self.Close(True)
 			
 
-	def onEditOptions(self, event):
-		#if OptionsDlg.OptionsDlg(self, _options).ShowModal() == wx.ID_OK:
-		#	#TODO: Save changes
-		#	self.update_ui()
-		pass
+	#def onEditOptions(self, event):
+	#	#if OptionsDlg.OptionsDlg(self, _options).ShowModal() == wx.ID_OK:
+	#	#	#TODO: Save changes
+	#	#	self.update_ui()
+	#	pass
 
 
 	def onHelpAbout(self, event):
@@ -235,7 +257,8 @@ class MainFrame(wx.Frame):
 			self.statusbar.SetFieldsCount(3, widths=(-1,-1,50))
 			self.statusbar.SetStatusStyles((wx.SB_SUNKEN,wx.SB_NORMAL,wx.SB_NORMAL))
 			rect = self.statusbar.GetFieldRect(2)
-			self.cancelbtn = wx.Button(parent=self.statusbar, label="Cancel", pos=rect.Position, size=rect.Size)
+			self.cancelbtn = wx.Button(parent=self.statusbar, label=_("Cancel"), \
+									pos=rect.Position, size=rect.Size)
 			self.Bind(wx.EVT_BUTTON, self.onProgressCancel, self.cancelbtn)
 			self.cancelbtn.Show()
 		else:
@@ -243,7 +266,8 @@ class MainFrame(wx.Frame):
 			self.statusbar.SetStatusStyles((wx.SB_SUNKEN,wx.SB_NORMAL))
 
 		rect = self.statusbar.GetFieldRect(1)
-		self.progressbar = wx.Gauge(parent=self.statusbar, range=maxval, pos=rect.Position, size=rect.Size, style=wx.GA_HORIZONTAL)
+		self.progressbar = wx.Gauge(parent=self.statusbar, range=maxval, \
+								pos=rect.Position, size=rect.Size, style=wx.GA_HORIZONTAL)
 		
 	def update_progressbar(self, newpos):
 		self.progressbar.SetValue(newpos)
@@ -262,7 +286,7 @@ class MainFrame(wx.Frame):
 	'''
 
 	def update_statusbar(self, text=None, update=True):
-		self.statusbar.SetStatusText(text or "Ready ...")
+		self.statusbar.SetStatusText(text or _("Ready ..."))
 
 		
 	'''
@@ -289,7 +313,7 @@ class MainFrame(wx.Frame):
 
 	def get_title(self):
 		#s = "Satisfactory Save Repairer"
-		s = "Satisfactory Savegame Checker"
+		s = _("Satisfactory Savegame Checker")
 		if self.currFile:
 			s += " - " + self.currFile.Filename
 		return s
@@ -302,14 +326,14 @@ class MainFrame(wx.Frame):
 	def loader_callback(self, event):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
-			self.update_statusbar("Tilling earth ...")#"Loading file ...")
+			self.update_statusbar(_("Loading file ..."))
 			self.show_progressbar(event.maxval)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			self.update_progressbar(event.val)
 			
 		elif event.which == Callback.Callback.END:
-			self.update_statusbar("Done loading")
+			self.update_statusbar(_("Done loading"))
 			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
@@ -317,39 +341,108 @@ class MainFrame(wx.Frame):
 	def checker_callback(self, event):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
-			self.update_statusbar("Sorting out stones ...")#"Checking objects ...")
+			self.update_statusbar(_("Checking objects ..."))
 			self.show_progressbar(event.maxval)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			self.update_progressbar(event.val)
 			
 		elif event.which == Callback.Callback.END:
-			self.update_statusbar("Done sorting")#"Done checking")
+			self.update_statusbar(_("Done checking"))
 			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
 
+	'''
 	def builder_callback(self, event):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
-			self.update_statusbar("Growing banana tree ...")#"Populating tree ...")
+			self.update_statusbar(_("Populating tree ..."))
 			self.show_progressbar(event.maxval)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			self.update_progressbar(event.val)
 			
 		elif event.which == Callback.Callback.END:
-			self.update_statusbar("Done growing, enjoy")#"Done populating")
+			self.update_statusbar(_("Done populating"))
 			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
 
 		# Done dealing with main frame, rest of duties is up to tree view itself
 		self.treeview.process_event(event)
-		
+	'''	
+	def result_callback(self, event):
+		if event.which == Callback.Callback.START:
+			self.set_busy()
+			self.update_statusbar(_("Generating report ..."))
+			self.show_progressbar(event.maxval)
+			
+		elif event.which == Callback.Callback.UPDATE:
+			if event.data:
+				self.infopanel.update(event.data, True)
+			self.update_progressbar(event.val)
+			
+		elif event.which == Callback.Callback.END:
+			self.update_statusbar(_("Done generating"))
+			self.hide_progressbar()
+			self.set_idle()
+			self.update_ui()
+
 	
 
+	
+	def __cb_results_start(self, total):
+		if self.__results_callback: 
+			self.__results_callback.start(total)
 		
+	def __cb_results_update(self, text):
+		if self.__results_callback: 
+			self.__results_callback.update(self.__results_count, text)
+		
+	def __cb_results_end(self):
+		if self.__results_callback: 
+			self.__results_callback.end(True)
+	
+	def show_results(self, callback):
+		self.__results_callback = callback
+		self.__results_count = 0
+		self.__indent = 0
+		
+		total = self.currFile.TotalElements		
+		self.__cb_results_start(total)
+		
+		for obj in self.currFile.Objects:
+			self.__show_results(obj)
+		
+		for obj in self.currFile.Collected:
+			self.__show_results(obj)
+
+		self.__cb_results_end()
+
+	def __show_results(self, obj):
+		self.__results_count += 1
+		if obj.HasErrors:
+			s = str(obj) + "\n"
+			for e in obj.Errors:
+				s += ("\t"*self.__indent) + e + "\n"  
+			self.__cb_results_update(s)
+			childs = obj.Childs
+			if childs:
+				self.__show_results_recurs(childs)
+				
+	def __show_results_recurs(self, childs):
+		self.__indent += 1
+		for name in childs:
+			sub = childs[name]
+
+			if isinstance(sub, (list,dict)):
+				for obj in sub:
+					self.__show_results(obj)
+			else:
+				self.__show_results(sub)
+		
+		self.__indent -= 1
 
 '''
 Main
@@ -357,7 +450,7 @@ Main
 
 #print(font.families())
 
-_options = Options.Options("SatisfactorySaveRepairer.ini")
+#_options = Options.Options("SatisfactorySaveChecker.ini")
 
 #root = tk.Tk()
 #root.option_add('*tearOff', FALSE)

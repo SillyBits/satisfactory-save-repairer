@@ -39,7 +39,7 @@ class TreeView(wx.TreeCtrl):
 		
 		root = self.__add(None, self.__savegame.Filename, None)
 		
-		label ="Objects [{}]".format(len(self.__savegame.Objects))
+		label = "Objects [{}]".format(len(self.__savegame.Objects))
 		self.__objects = self.__add(root, label, None)
 		
 		# Early exit for faster debugging

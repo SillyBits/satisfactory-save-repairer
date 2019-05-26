@@ -1,0 +1,32 @@
+{
+	"&File": "&Datei",
+	"&Open...\tCtrl+O": "Ö&ffnen...\tStrg+O",
+	"Opens a save game": "Öffnet einen Spielstand",
+	"C&lose\tCtrl+W": "Sch&ließen\tStrg+W",
+	"Closes save": "Schließt den derzeit geöffneten Spielstand",
+	"E&xit": "Be&enden",
+	"Terminate program": "Beendet das Programm",
+	"&Help": "&Hilfe",
+	"&About...": "Ü&ber...",
+	"Information about this program": "Informationen Über dieses Programm",
+	"Satisfactory Savegame Checker": "Satisfactory Spielstand Überprüfer",
+	"Ready ...": "Bereit ...",
+	"About Satisfactory Savegame Checker": "Über Satisfactory Spielstand Überprüfer",
+	"OK": "Ok",
+	"Select savegame to load": "Spielstand auswählen",
+	"Savegames": "Spielstände",
+	"All files": "Alle Dateien",
+	"Loading file ...": "Lade Spielstand ...",
+	"Done loading": "Spielstand geladen",
+	"Checking objects ...": "Überprüfe Objekte ...",
+	"Done checking": "Überprüfung abgeschlossen",
+	"Invalid": "Ungültig",
+	"Property": "Property",
+	"Has one or more errors": "Ein oder mehrere Fehler gefunden",
+	"Generating report ...": "Erzeuge Bericht ...",
+	"Done generating": "Berichterzeugung abgeschlossen",
+	"<none>": "<leer>",
+	
+	
+	"": ""
+}

@@ -589,7 +589,7 @@ Helpers
 '''
 		
 def getSafeStr(s):
-	return s or '<none>'
+	return s or _('<none>')
 
 
 

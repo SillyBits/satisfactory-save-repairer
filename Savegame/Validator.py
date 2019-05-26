@@ -56,8 +56,8 @@ class Validator:
 		if childs:
 			outcome &= self.__check_recurs(childs)
 			
-		#if not outcome:
-		#	obj.AddError("failed!")
+		if not outcome:
+			self.__add_error(obj, _("Has one or more errors"))
 		
 		self.__cb_update()
 		return outcome
@@ -86,7 +86,7 @@ class Validator:
 
 	@staticmethod
 	def __add_error(obj, params=None):
-		s = "Invalid " + obj.TypeName
+		s = _("Invalid") + " " + obj.TypeName
 		if params:
 			s += ": " + params
 		obj.AddError(s)
@@ -156,16 +156,16 @@ class Validator:
 		if obj.NeedTransform:
 			if not self.__v_Quat(obj.Rotation):
 				#obj.AddError("Invalid " + obj.Rotation.TypeName)
-				Validator.__add_error(obj, "Property 'Rotation'")
+				Validator.__add_error(obj, _("Property") + " 'Rotation'")
 				outcome = False
 			if not self.__v_Vector(obj.Translate):
 				#obj.AddError("Invalid " + obj.Translate.TypeName)
-				Validator.__add_error(obj, "Property 'Translate'")
+				Validator.__add_error(obj, _("Property") + " 'Translate'")
 				outcome = False
 			# For now, we print negative scales as error
 			if not self.__v_Vector(obj.Scale, Validator.LOWER_SCALE):
 				#obj.AddError("Invalid " + obj.Scale.TypeName)
-				Validator.__add_error(obj, "Property 'Scale'")
+				Validator.__add_error(obj, _("Property") + " 'Scale'")
 				outcome = False
 		return outcome
 		

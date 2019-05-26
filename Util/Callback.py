@@ -83,7 +83,7 @@ class Callback:
 
 	def __trigger(self, **kw):
 		if self.__target:
-			evt = Callback.__EvtCls(**kw)      # Create the event
+			evt = Callback.__EvtCls(**kw)    # Create the event
 			wx.PostEvent(self.__target, evt) # Post the event
 
 

@@ -34,10 +34,11 @@ class DetailsPanel(wx.HVScrolledWindow):
 
 
 	def show_property(self, prop):
-		if not prop:
-			self.__show_text("<no data avail>")
-		else:
-			self.__show_prop(prop)
+		pass
+		#if not prop:
+		#	self.__show_text("<no data avail>")
+		#else:
+		#	self.__show_prop(prop)
 
 
 	'''
@@ -100,7 +101,7 @@ class DetailsPanel(wx.HVScrolledWindow):
 
 '''
 Types of controls avail
-'''
+'' '
 
 class BaseControl:
 	def __init__(self, parent, label, val): 
@@ -155,9 +156,9 @@ class GroupControl():
 	pass
 
 	
-'''
+'' '
 Panels avail
-'''
+'' '
 	
 class BasePanel:#(wx.Panel):
 	# Actually not really a panel
@@ -192,9 +193,9 @@ class GroupPanel(wx.CollapsiblePane):
 
 """
 
-'''
+'' '
 Actual save values following
-'''
+'' '
 
 class Property(Accessor):
 	
@@ -288,9 +289,9 @@ class PropertyList(Accessor):
 
 	
 
-'''
+'' '
 Complex types
-'''
+'' '
 
 class Header(Accessor):
 	def read(self, reader):
@@ -304,12 +305,12 @@ class Header(Accessor):
 		self.SaveDateTime = reader.readLong()
 		self.Visibility = reader.readByte()
 		return self
-		'''
+		"""
 		to convert SaveDateTime to a unix timestamp use:
 			saveDateSeconds = SaveDateTime / 10000000
 			print(saveDateSeconds-62135596800)
 		see https://stackoverflow.com/a/1628018
-		'''
+		"""
 
 class Collected(Accessor): #TODO: Find correct name, if any
 	def __str__(self):
@@ -624,9 +625,9 @@ class Object(Accessor):
 		self.Entity = Entity().read(reader, length)
 """
 
-'''
+'' '
 Simple types
-'''
+'' '
 
 class BoolProperty(BasePanel): pass
 
@@ -649,7 +650,7 @@ class Actor(GroupPanel):
 	def populate(self, parent, prop):
 		#pass#BasePanel.populate(self, prop)
 		#self._add("Label", wx.StaticText(parent, "Ctrl"))
-		'''
+		"""
 		self.add("ClassName", StrProperty().populate(self.Panel, prop.ClassName))
 		self.add("LevelName", StrProperty().populate(self.Panel, prop.LevelName))
 		self.add("PathName", StrProperty().populate(self.Panel, prop.PathName))
@@ -658,7 +659,7 @@ class Actor(GroupPanel):
 		self.add("Translate", StrProperty().populate(self.Panel, prop.Translate))
 		self.add("Scale", StrProperty().populate(self.Panel, prop.Scale))
 		self.add("WasPlacedInLevel", IntProperty().populate(self.Panel, prop.WasPlacedInLevel))
-		'''
+		"""
 		self.__controls['ClassName'] = StrControl(self, "ClassName", prop.ClassName)
 		self.__controls['LevelName'] = StrControl(self, "LevelName", prop.LevelName)
 		self.__controls['PathName']  = StrControl(self, "PathName" , prop.PathName)
@@ -698,10 +699,11 @@ class Actor(GroupPanel):
 
 
 
-'''
+'' '
 Helpers
-'''
+'' '
 		
 def getSafeStr(s):
 	return s or '<none>'
 
+'''
