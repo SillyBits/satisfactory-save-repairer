@@ -14,59 +14,50 @@ from Util \
 
 class TreeView(wx.TreeCtrl):
 	
-	def __init__(self, parent, pane_func=None):
+	def __init__(self, parent, pane=None):
 		super().__init__(parent=parent, size=(300,400), \
 						style=wx.TR_HAS_BUTTONS|wx.TR_TWIST_BUTTONS|wx.TR_SINGLE)
 		self.__event = Event()
-		self.__pane_func = pane_func
-		if pane_func:
+		self.__pane = pane
+		if pane:
 			self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onItemSelected)
-		
-	def __del__(self):
-		if self.__pane_func:
-			self.Unbind(wx.EVT_TREE_SEL_CHANGED)
-		del self.__event
+		self.__error_color = wx.Colour(255,0,0)
 
 	def setup(self, savegame, callback):
 		self.__savegame = savegame
 		self.__callback = callback
 		self.__count = 0
+		self.__depth = 0 #TODO: Check for those in add_recurs
+		self.__max_depth = 4
 		self.__obj_map = {}
 		
 		self.__last_id = None
 		self.__event.clear()
 	
-		# Count items avail in first pass, then add to tree as second pass
-		self.__total = 1 + len(self.__savegame.Objects)		
-		for obj in self.__savegame.Objects:
-			childs = obj.Childs
-			if childs:
-				self.__total += self._count_recurs(childs)
-		self.__total += 1 + len(self.__savegame.Collected)
+		total = self.__savegame.TotalElements		
+		self.__cb_start(total)
 		
-		self.__cb_start()
-		
-		root = self._add(None, self.__savegame.Filename, None)
+		root = self.__add(None, self.__savegame.Filename, None)
 		
 		label ="Objects [{}]".format(len(self.__savegame.Objects))
-		self.__objects = self._add(root, label, None)
+		self.__objects = self.__add(root, label, None)
 		
 		# Early exit for faster debugging
 		#self.__cb_end()
 		#return
 
 		for obj in self.__savegame.Objects:
-			label = obj.Label
-			itemid = self._add(self.__objects, label, obj)
+			label = str(obj)#obj.Label
+			itemid = self.__add(self.__objects, label, obj)
 			childs = obj.Childs
 			if childs:
-				self._add_recurs(itemid, childs)
+				self.__add_recurs(itemid, childs)
 		
 		label = "Collected [{}]".format(len(self.__savegame.Collected))
-		self.__collected = self._add(root, label, None)		
+		self.__collected = self.__add(root, label, None)		
 		for obj in self.__savegame.Collected:
-			label = obj.Label
-			itemid = self._add(self.__collected, label, obj)
+			label = str(obj)#obj.Label
+			itemid = self.__add(self.__collected, label, obj)
 
 		self.__cb_end()
 		
@@ -76,6 +67,7 @@ class TreeView(wx.TreeCtrl):
 		
 		if event.which == Callback.Callback.START:
 			self.DeleteAllItems()
+			self.Enable(False)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			if not event.data.Parent:
@@ -85,8 +77,19 @@ class TreeView(wx.TreeCtrl):
 				# Rest are 'just' childs
 				itemid = self.AppendItem(event.data.Parent, event.data.Label, \
 										image=-1, selImage=-1, data=event.data.Info)
-			
+
+				if event.data.Info and event.data.Info.Property.Errors:
+					# Propagate error state up the tree
+					hier = itemid
+					while hier:
+						if self.IsBold(hier):
+							break # Propagated already
+						self.SetItemBold(hier)
+						self.SetItemTextColour(hier, self.__error_color)
+						hier = self.GetItemParent(hier) 
+
 		elif event.which == Callback.Callback.END:
+			self.Enable(True)
 			self.ScrollTo(self.RootItem)
 			self.Expand(self.RootItem)
 
@@ -99,28 +102,8 @@ class TreeView(wx.TreeCtrl):
 	Private implementation
 	'''
 
-	def _count_recurs(self, childs):
-		count = 0
-		for name in childs:
-			sub = childs[name]
-
-			count += 1
-			if isinstance(sub, (list,dict)):
-				for obj in sub:
-					count += 1
-					childs = obj.Childs
-					if childs:
-						count += self._count_recurs(childs)
-			else:
-				childs = sub.Childs
-				if childs:
-					count += self._count_recurs(childs)
-
-		return count
-
-		
-	def __cb_start(self):
-		if self.__callback: self.__callback.start(self.__total)
+	def __cb_start(self, total):
+		if self.__callback: self.__callback.start(total)
 		
 	def __cb_update(self, pkg):
 		if self.__callback: self.__callback.update(self.__count, pkg)
@@ -129,15 +112,16 @@ class TreeView(wx.TreeCtrl):
 		if self.__callback: self.__callback.end(True)
 
 
-	def _add(self, parent, label, ref=None):
+	def __add(self, parent, label, ref=None):
 		#print("Trying to add: ",parent,'"'+label+'"',ref)
 		self.__count += 1
 		
 		if ref:
-			info = TreeView.NodeInfo(ref, None)# No error info yet
-			pkg = TreeView.EventPackage(parent, label, info)
+			info = TreeView.NodeInfo(ref)# Might add more info in future, so keep this as wrapper
 		else:
-			pkg = TreeView.EventPackage(parent, label, None)
+			info = None
+		
+		pkg = TreeView.EventPackage(parent, label, info)
 
 		'''		
 		self.__event.clear()
@@ -162,29 +146,29 @@ class TreeView(wx.TreeCtrl):
 		return itemid
 
 
-	def _add_recurs(self, parent, childs):
+	def __add_recurs(self, parent, childs):
 		for name in childs:
 			sub = childs[name]
 
 			if isinstance(sub, (list,dict)):
 				label = "{} [{}]".format(name, len(sub))
-				sub_parent = self._add(parent, label, None)
+				sub_parent = self.__add(parent, label, None)
 				for obj in sub:
-					label = obj.Label #str(obj)
-					itemid = self._add(sub_parent, label, obj)
+					label = str(obj)#obj.Label
+					itemid = self.__add(sub_parent, label, obj)
 					childs = obj.Childs
 					if childs:
-						self._add_recurs(itemid, childs)
+						self.__add_recurs(itemid, childs)
 			else:
-				label = sub.Label
-				itemid = self._add(parent, label, sub)
+				label = str(sub)#sub.Label
+				itemid = self.__add(parent, label, sub)
 				childs = sub.Childs
 				if childs:
-					self._add_recurs(itemid, childs)
+					self.__add_recurs(itemid, childs)
 
 
 	def onItemSelected(self, event):
-		assert self.__pane_func #!= None
+		assert self.__pane #!= None
 
 		info = self.GetItemData(event.Item)
 		prop = None
@@ -195,19 +179,27 @@ class TreeView(wx.TreeCtrl):
 		elif info.Property:
 			# Show info on property
 			'''
-			self.__pane_func(info.Property.Label+"\n\n"+str(info.Property))
+			self.__pane(info.Property.Label+"\n\n"+str(info.Property))
 			'''
 			prop = info.Property
 			
 		'''
 		For now, just list all keys and their values, if any avail.
 		Next approach is to get UI elements based on type
-		''' 
+		'''
+		""" 
 		s = ''
+		if info and info.Property.Errors:
+			s = "Found errors in object:\n"
+			for error in info.Property.Errors:
+				s += "- " + error + "\n"
+			s += "\n\n"
 		if prop:
-			for key in prop.Keys():
+			for key in prop.Keys:
 				s += "{}: {}\n".format(key, prop[key])
-		self.__pane_func(s)
+		self.__pane.update(s)
+		"""
+		self.__pane.show_property(prop)
 		
 	
 	class EventPackage:
@@ -218,10 +210,8 @@ class TreeView(wx.TreeCtrl):
 			self.Info = info 
 
 	class NodeInfo:
-		def __init__(self, sg_obj, err_obj):
+		def __init__(self, sg_obj):
 			self.Property = sg_obj
-			self.ErrorInfo = err_obj
-			self.Id = None 
 
 
 

@@ -4,4 +4,5 @@ __all__ = [
 	"Reader", 
 	"Writer", 
 	"Property",
+	"Validator",
 ]

@@ -38,30 +38,34 @@ class Savegame:
 	def FullFilename(self):
 		return self.__filename
 
+	@property
+	def TotalElements(self):
+		return self.__total
+
 
 	'''
 	Private implementation
 	'''
 
-	def __cb_start(self, reader):
+	def __cb_read_start(self, reader):
 		if self.__callback: self.__callback.start(reader.Size)
 		
-	def __cb_update(self, reader):
+	def __cb_read_update(self, reader):
 		if self.__callback: self.__callback.update(reader.Pos)
 		
-	def __cb_end(self, reader):
+	def __cb_read_end(self, reader):
 		if self.__callback: self.__callback.end(reader.Pos == reader.Size)
 
 
 	def __load(self, callback):
 		self.__callback = callback
 		
-		reader = Reader.Reader(self.__filename)#, callback)
-		self.__cb_start(reader)
+		reader = Reader.Reader(self.__filename)
+		self.__cb_read_start(reader)
 
 		try:		
 			self.Header = Property.Header().read(reader)
-			self.__cb_update(reader)
+			self.__cb_read_update(reader)
 			
 			self.Objects = []
 			count = reader.readInt()
@@ -76,7 +80,7 @@ class Savegame:
 					raise AssertionError("Savegame at pos {}: Unknown type {}"\
 										.format(prev_pos, _type))
 				self.Objects.append(obj.read(reader))
-				self.__cb_update(reader)
+				self.__cb_read_update(reader)
 				
 			count_ = reader.readInt()
 			assert count == count_
@@ -84,16 +88,16 @@ class Savegame:
 			#TODO: 2nd object fails badly :(		
 			for obj in self.Objects:
 				obj.read_entity(reader)
-				self.__cb_update(reader)
+				self.__cb_read_update(reader)
 	
 			self.Collected = []
 			count = reader.readInt()
 			for i in range(count):
 				self.Collected.append(Property.Collected().read(reader))
-				self.__cb_update(reader)
+				self.__cb_read_update(reader)
 	
 			self.Missing = reader.readNByte(reader.Size - reader.Pos)
-			self.__cb_update(reader)
+			self.__cb_read_update(reader)
 			
 
 		except Property.Property.PropertyReadException as exc:
@@ -108,9 +112,10 @@ class Savegame:
 			print(exc)
 			raise
 		
-		finally:		
+		finally:
+			self.__update_totals()
 			sleep(1)
-			self.__cb_end(reader)
+			self.__cb_read_end(reader)
 			del reader
 
 
@@ -118,3 +123,41 @@ class Savegame:
 		writer = Writer.Writer(filename, callback)
 		#...
 		del writer
+
+
+	def __update_totals(self):
+		# Count total number of elemts avail
+		self.__total = 0
+				
+		for obj in self.Objects:
+			self.__total += 1
+			childs = obj.Childs
+			if childs:
+				self.__total += self._count_recurs(childs)
+				
+		#self.__total += 1 + len(
+		for obj in self.Collected:
+			self.__total += 1
+			# Does this entry need more depth analysis?
+
+	def _count_recurs(self, childs):
+		count = 0
+		for name in childs:
+			sub = childs[name]
+
+			count += 1
+			if isinstance(sub, (list,dict)):
+				for obj in sub:
+					count += 1
+					childs = obj.Childs
+					if childs:
+						count += self._count_recurs(childs)
+			else:
+				childs = sub.Childs
+				if childs:
+					count += self._count_recurs(childs)
+
+		return count
+
+
+

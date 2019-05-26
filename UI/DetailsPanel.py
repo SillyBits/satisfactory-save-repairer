@@ -1,94 +1,196 @@
+"""
+All the panels needed for displaying savegame data
+"""
 
-import os
-
-
-'''
-To allow for abstract access to property values
-
-Quite some abuse here and there, but doing the "job" well
-'''
-class Accessor:
-
-	# List of reserved name not to be populated by 'Keys'
-	__reserved_names = [ "Keys", "Childs" ]
+import wx
 
 
-	@property
-	def TypeName(self):
-		'''
-		Returns property name
-		'''
-		return self.__class__.__qualname__
+"""
+Simple text-based panel
+"" "
+class DetailsPanel(wx.StaticText):
 	
-	@property
-	def Keys(self):
-		'''
-		Returns list of iterable properties
-		'''
-		if not hasattr(self, Accessor.__prop_keys):
-			# Create new cache of keys avail
-			self.__keys = []
-			for member in dir(self):
-				if member.startswith('_'):
-					continue # Skip private members
-				if member in self.__reserved_names:
-					continue # A reserved name like 'Keys'
-				value = self[member]
-				if callable(value):
-					continue # Skip callables
-				self.__keys.append(member)
-		return self.__keys
-
-	@property
-	def Childs(self):
-		'''
-		Returns list of childs to be processed as well
-		Might be removed in favour of Keys() and detecting sequences
-		''' 
-		return None
+	def __init__(self, parent):
+		super().__init__(parent, size=(300,600))
 
 
-	@property
-	def HasErrors(self):
-		'''
-		Did validation encounter any errors in this property
-		'''
-		return hasattr(self, Accessor.__prop_error)
-	
-	@property
-	def Errors(self):
-		'''
-		Return list of errors encountered in this property, or None
-		'''
-		return self.__errors if hasattr(self, Accessor.__prop_error) else None
-	
-	def AddError(self, info):
-		'''
-		Adds a validation error to this property
-		'''
-		if not hasattr(self, Accessor.__prop_error):
-			self.__errors = []
-		self.__errors.append(info)
-
-
-	def __getitem__(self, key):
-		v = object.__getattribute__(self, key)
-		if hasattr(v, '__get__'):
-			return v.__get__(None, self)
-		return v
-
-	def __setitem__(self, key, value):
-		raise ValueError # Not allowed yet
-		v = object.__getattribute__(self, key)
-		if hasattr(v, '__set__'):
-			v.__set__(None, self, value)
+	def update(self, text, append=False):
+		if append:
+			self.SetLabel(self.GetLabel() + "\n" + text)
 		else:
-			v = value
+			self.SetLabel(text)
+
+"""
+
+class DetailsPanel(wx.HVScrolledWindow):
+	
+	def __init__(self, parent):
+		super().__init__(parent, size=(300,600))
+		self.SetAutoLayout(True)
+		self.__mode = DetailsPanel.MODE_NONE
+
+	def update(self, text, append=False):
+		self.__show_text(text, append)
 
 
-	__prop_keys = '_Accessor__keys'
-	__prop_error = '_Accessor__errors'
+	def show_property(self, prop):
+		if not prop:
+			self.__show_text("<no data avail>")
+		else:
+			self.__show_prop(prop)
 
+
+	'''
+	Private implementation
+	'''
+			
+	def __delete_all(self):
+		self.__mode = DetailsPanel.MODE_NONE
+		self.DestroyChildren()
+
+	def __show_text(self, text, append=False):
+		if self.__mode != DetailsPanel.MODE_TEXT:
+			self.__delete_all()
+			wx.StaticText(self, label="")
+			self.__mode = DetailsPanel.MODE_TEXT
+
+		ctrl = self.GetChildren()[0]
+		if append:
+			ctrl.SetLabel(ctrl.GetLabel() + "\n" + text)
+		else:
+			ctrl.SetLabel(text)
+
+	def __show_prop(self, prop):
+		self.__delete_all()
+		self.__mode = DetailsPanel.MODE_OBJ
+		
+		t = prop.TypeName
+		if not t in globals():
+			self.__show_text(str(prop))
+			return
+		
+		constr = globals()[t]
+		inst = constr(self)
+		inst.populate(self, prop)
+		#self.SetSizer(inst)
+		self.Layout()
+		
+		
+		#TODO: Init panel, which might init more sub-panels itself
+		#TODO: Use a recursive method for all the hard work
+		'''
+		collpane = wx.CollapsiblePane(self, wx.ID_ANY, "Details:")
+		
+		# add the pane with a zero proportion value to the 'sz' sizer which contains it
+		sz.Add(collpane, 0, wx.GROW | wx.ALL, 5)
+		
+		# now add a test label in the collapsible pane using a sizer to layout it:
+		win = collpane.GetPane()
+		paneSz = wx.BoxSizer(wx.VERTICAL)
+		paneSz.Add(wx.StaticText(win, wx.ID_ANY, "test!"), 1, wx.GROW | wx.ALL, 2)
+		win.SetSizer(paneSz)
+		paneSz.SetSizeHints(win)		
+		'''
+
+
+	MODE_NONE = 0
+	MODE_TEXT = 1
+	MODE_OBJ  = 2
+
+
+'''
+Types of controls avail
+'''
+
+class BaseControl:
+	def __init__(self, parent, label, val): 
+		parent.add(label, self.get_control(parent, val))
+	
+	def get_control(self, parent, val):
+		pass
+	
+	#def set_limits(self, lower, upper):
+	#	self.__lower_bounds = lower
+	#	self.__upper_bounds = upper
+	#
+	#def check_bounds(self):
+	#	pass
+
+class BoolControl(BaseControl):
+	def get_control(self, parent, val):
+		ctrl = wx.CheckBox(parent.Panel)#, validator=?)
+		ctrl.Value = wx.CHK_CHECKED if val else wx.CHK_UNCHECKED
+		ctrl.Enable(False)
+		return ctrl
+
+class ByteControl(BaseControl):
+	def get_control(self, parent, val):
+		#TODO: Use a spinner and add suitable limits
+		ctrl = wx.TextCtrl(parent.Panel, value=val)
+		ctrl.Enable(False)
+		return ctrl
+
+class IntControl(BaseControl):
+	def get_control(self, parent, val):
+		#TODO: Use a spinner and add suitable limits
+		ctrl = wx.TextCtrl(parent.Panel, value=val)
+		ctrl.Enable(False)
+		return ctrl
+
+class FloatControl(BaseControl):
+	def get_control(self, parent, val):
+		#TODO: Use a spinner and add suitable limits? Might be hard to spin on floats, we'll see
+		ctrl = wx.TextCtrl(parent.Panel, value=val)
+		ctrl.Enable(False)
+		return ctrl
+
+class StrControl(BaseControl):
+	def get_control(self, parent, val):
+		#TODO: Any limits to apply here? Besides not being empty
+		ctrl = wx.TextCtrl(parent.Panel, value=val)
+		ctrl.Enable(False)
+		return ctrl
+
+class GroupControl():
+	pass
+
+	
+'''
+Panels avail
+'''
+	
+class BasePanel:#(wx.Panel):
+	# Actually not really a panel
+
+	def populate(self, parent, prop): 
+		parent.add(prop.Name, wx.StaticText(parent.Panel, str(prop.Value)))
+	
+
+class GroupPanel(wx.CollapsiblePane):
+
+	@property
+	def Panel(self):
+		return self.GetPane()
+	
+	def __init__(self, parent):
+		super().__init__(parent, size=parent.ClientSize)
+		self.__rows = 0
+		self.__grid = wx.GridBagSizer(5, 5)
+		self.GetPane().SetSizer(self.__grid)	
+		
+	def populate(self, parent, prop):
+		self.__grid.Layout()
+
+	def add(self, label, ctrl):
+		self.__grid.Add(wx.StaticText(self.Panel, label=label), \
+					pos=(self.__rows,0), flag=wx.TOP|wx.LEFT|wx.BOTTOM)
+		self.__grid.Add(ctrl, pos=(self.__rows,1), flag=wx.TOP|wx.LEFT|wx.BOTTOM)
+		self.__grid.AddGrowableRow(self.__rows)
+		self.__rows += 1
+
+
+
+"""
 
 '''
 Actual save values following
@@ -184,43 +286,6 @@ class PropertyList(Accessor):
 		return self
 
 
-'''
-Simple types
-'''
-	
-class BoolProperty(Property):
-	def read(self, reader):
-		self.Value = reader.readByte()
-		self.checkNullByte(reader)
-		return self
-	
-class ByteProperty(Property):
-	def read(self, reader):
-		self.Unknown = reader.readStr()
-		self.checkNullByte(reader)
-		if self.Unknown == "None":
-			self.Value = reader.readByte()
-		else:
-			self.Value = reader.readStr()
-		return self
-	
-class IntProperty(Property):
-	def read(self, reader):
-		self.checkNullByte(reader)
-		self.Value = reader.readInt()
-		return self
-
-class FloatProperty(Property):
-	def read(self, reader):
-		self.checkNullByte(reader)
-		self.Value = reader.readFloat()
-		return self
-	
-class StrProperty(Property):
-	def read(self, reader):
-		self.checkNullByte(reader)
-		self.Value = reader.readStr()
-		return self
 	
 
 '''
@@ -557,8 +622,56 @@ class Object(Accessor):
 	def read_entity(self, reader):
 		length = reader.readInt()
 		self.Entity = Entity().read(reader, length)
+"""
 
-class Actor(Accessor):
+'''
+Simple types
+'''
+
+class BoolProperty(BasePanel): pass
+
+class ByteProperty(BasePanel): pass
+	
+class IntProperty(BasePanel): pass
+
+class FloatProperty(BasePanel): pass
+	
+class StrProperty(BasePanel): pass
+
+
+
+class Actor(GroupPanel):
+	
+	def __init__(self, parent):
+		super().__init__(parent)
+		self.__controls = {}
+		
+	def populate(self, parent, prop):
+		#pass#BasePanel.populate(self, prop)
+		#self._add("Label", wx.StaticText(parent, "Ctrl"))
+		'''
+		self.add("ClassName", StrProperty().populate(self.Panel, prop.ClassName))
+		self.add("LevelName", StrProperty().populate(self.Panel, prop.LevelName))
+		self.add("PathName", StrProperty().populate(self.Panel, prop.PathName))
+		self.add("NeedTransform", StrProperty().populate(self.Panel, prop.NeedTransform))
+		self.add("Rotation", StrProperty().populate(self.Panel, prop.Rotation))
+		self.add("Translate", StrProperty().populate(self.Panel, prop.Translate))
+		self.add("Scale", StrProperty().populate(self.Panel, prop.Scale))
+		self.add("WasPlacedInLevel", IntProperty().populate(self.Panel, prop.WasPlacedInLevel))
+		'''
+		self.__controls['ClassName'] = StrControl(self, "ClassName", prop.ClassName)
+		self.__controls['LevelName'] = StrControl(self, "LevelName", prop.LevelName)
+		self.__controls['PathName']  = StrControl(self, "PathName" , prop.PathName)
+		self.__controls['NeedTransform'] = BoolControl(self, "NeedTransform", prop.NeedTransform)
+		#StrProperty().populate(self, prop.Rotation)
+		#StrProperty().populate(self, prop.Translate)
+		#StrProperty().populate(self, prop.Scale)
+		self.__controls['WasPlacedInLevel'] = BoolControl(self, "WasPlacedInLevel", prop.WasPlacedInLevel)
+		super().populate(parent, prop)
+		
+
+
+	"""
 	def __str__(self):
 		return '[ACTOR] ' + getSafeStr(self.PathName)
 
@@ -581,6 +694,7 @@ class Actor(Accessor):
 	def read_entity(self, reader):
 		length = reader.readInt()
 		self.Entity = NamedEntity().read(reader, length)
+	"""
 
 
 
@@ -590,6 +704,4 @@ Helpers
 		
 def getSafeStr(s):
 	return s or '<none>'
-
-
 

@@ -6,22 +6,32 @@ Handy GUI for dealing with corrupted Satisfactory saves.
 import sys
 import os
 import threading
+from time import sleep
 
 import wx
 
 
-from Savegame import Savegame
+from Savegame \
+	import Savegame, Validator
 	 
 from Util \
 	import Options, Callback
 
 from UI \
-	import OptionsDlg, AboutDlg, TreeView
+	import OptionsDlg, AboutDlg, TreeView, DetailsPanel
 
 
 class Application(wx.App):
 	def __init__(self):
-		super().__init__(False)
+		super().__init__(False, useBestVisual=True)
+		
+		# Do additional groundwork
+		self.__path = os.path.dirname(sys.argv[0])
+		wx.FileSystem.AddHandler(wx.MemoryFSHandler()) 
+		wx.Image.AddHandler(wx.PNGHandler())
+
+	@property
+	def Path(self): return self.__path
 
 
 class MainFrame(wx.Frame):
@@ -31,12 +41,16 @@ class MainFrame(wx.Frame):
 
 	def __init__(self, parent=None):
 		super().__init__(parent, title="Satisfactory savegame repair", size=(800,480))
+
+		file = os.path.join(wx.App.Get().Path, "Resources/Logo-128x128.png")
+		self.Icon = wx.Icon(file)
+		
 		#self.pack(fill=BOTH, expand=Y)
 		#self.master.title(self.get_title())
 		#self.master.minsize(640,480)
 		#self.columnconfigure(0, weight=1, minsize=400)
 		#self.rowconfigure(0, weight=1, minsize=300)
-		self.create_widgets()
+		self.create_ui()
 		
 		# Finally, update UI
 		#self.update_extract_location()
@@ -44,6 +58,7 @@ class MainFrame(wx.Frame):
 		#self.update_tree()
 
 		self.Show()
+		self.Center()
 		self.set_idle()
 
 
@@ -51,7 +66,7 @@ class MainFrame(wx.Frame):
 	UI generation
 	'''
 
-	def create_widgets(self):
+	def create_ui(self):
 		self.create_menubar(self)
 		self.create_toolbars(self)
 		self.create_content(self)
@@ -61,19 +76,18 @@ class MainFrame(wx.Frame):
 		self.menuBar = wx.MenuBar()
 		self.SetMenuBar(self.menuBar)
 
-		def _add(menu, label, tooltip=None, func=None, enabled=True, id=wx.ID_ANY):
-			item = menu.Append(id, label, tooltip)
-			item.Enable(enabled)
+		def _add(menu, label, tooltip=None, func=None, menuid=wx.ID_ANY):
+			item = menu.Append(menuid, label, tooltip)
 			if func: 
 				self.Bind(wx.EVT_MENU, func, item)
 			return item
 
 		filemenu = wx.Menu()
 		self.menuBar.Append(filemenu, "&File")
-		_add(filemenu, "&Open...\tCtrl+O", "Opens a save game", self.onFileOpen)
-		_add(filemenu, "&Save\tCtrl+S", "Saves changes", self.onFileSave, enabled=False)
-		_add(filemenu, "Save &as...", "Saves changes into a different file", self.onFileSaveAs, enabled=False)
-		_add(filemenu, "C&lose\tCtrl+W", "Closes save, will prompt if pending changes detected", self.onFileClose, enabled=False)
+		self.menu_file_open = _add(filemenu, "&Open...\tCtrl+O", "Opens a save game", self.onFileOpen)
+		self.menu_file_save = _add(filemenu, "&Save\tCtrl+S", "Saves changes", self.onFileSave)
+		self.menu_file_save_as = _add(filemenu, "Save &as...", "Saves changes into a different file", self.onFileSaveAs)
+		self.menu_file_close = _add(filemenu, "C&lose\tCtrl+W", "Closes save, will prompt if pending changes detected", self.onFileClose)
 		filemenu.AppendSeparator()
 		_add(filemenu, "E&xit", "Terminate program", self.onFileExit, wx.ID_EXIT)
 
@@ -86,6 +100,7 @@ class MainFrame(wx.Frame):
 		_add(helpmenu, "&About", "Information about this program", self.onHelpAbout, wx.ID_ABOUT)
 
 	def create_toolbars(self, parent):
+		#TODO: Add 'Next' + 'Prev' error buttons to navigate in tree
 		pass
 
 	def create_statusbar(self, parent):
@@ -95,10 +110,11 @@ class MainFrame(wx.Frame):
 		self.main_splitter = wx.SplitterWindow(parent=self, style=wx.SP_3D|wx.SP_NO_XP_THEME|wx.SP_LIVE_UPDATE)
 		self.main_splitter.SetSashGravity(0.5)
 		self.main_splitter.SetSashSize(5)
-		self.treeview = TreeView.TreeView(self.main_splitter, self.update_pane)
-		self.infopane = wx.StaticText(parent=self.main_splitter, \
-									label="Hello there! I'm a placeholder :D", size=(300,600))
-		self.main_splitter.SplitVertically(self.treeview, self.infopane, 0)
+		#self.infopane = wx.StaticText(parent=self.main_splitter, \
+		#							label="Hello there! I'm a placeholder :D", size=(300,600))
+		self.infopanel = DetailsPanel.DetailsPanel(self.main_splitter)
+		self.treeview = TreeView.TreeView(self.main_splitter, self.infopanel)
+		self.main_splitter.SplitVertically(self.treeview, self.infopanel, 0)
 
 
 	'''
@@ -107,23 +123,19 @@ class MainFrame(wx.Frame):
 
 	def update_ui(self):
 		self.SetTitle(self.get_title())
-		# """
-		# #TODO: Be more precise on menu item states
-		# #	  e.g. archives not yet extracted will need this option to be avail
-		# cab_avail = "normal" if _options.cabinet else "disabled"
-		# self.menu_file.entryconfigure("Extract selected", state=cab_avail)
-		# self.menu_file.entryconfigure("Extract all", state=cab_avail)
-		# self.menu_file.entryconfigure("Close root", state=cab_avail)
-		# #self.update_tree() # only called when _options.cabinet has changed!
-		# # more to come, e.g. populating tree, ...
-		# #...
-		# """
-		# self.set_statusbar()
-		# Tk.update_idletasks(self)
-		pass
+		
+		# Be more precise on menu item states
+		has_save = (self.currFile != None)
+		has_changes = False
+		self.menu_file_open.Enable(True)
+		self.menu_file_save.Enable(has_save & has_changes)  		
+		self.menu_file_save_as.Enable(has_save & has_changes)  		
+		self.menu_file_close.Enable(has_save)  		
 	
-	def update_pane(self, text):
-		self.infopane.SetLabel(text)
+	def update_panel(self, text, append=False):
+		self.infopanel.update(text, append)
+
+			
 
 
 	'''
@@ -131,6 +143,8 @@ class MainFrame(wx.Frame):
 	'''
 		
 	def onFileOpen(self, event):
+		self.onFileClose(None)
+
 		if 'LOCALAPPDATA' in os.environ:
 			path = os.path.join(os.environ['LOCALAPPDATA'], "FactoryGame/Saved/SaveGames")
 		elif 'APPDATA' in os.environ:
@@ -140,7 +154,7 @@ class MainFrame(wx.Frame):
 
 		#new_file = os.path.join(path, "testfile.sav")
 		new_file = ''
-		dlg = wx.FileDialog(self, "Select savegame to load", new_file, "",\
+		dlg = wx.FileDialog(self, "Select savegame to load", path, "",\
 							"Savegames (*.sav)|*.sav|All files (*.*)|*.*", wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
 			new_file = os.path.join(dlg.Directory, dlg.Filename)
@@ -150,21 +164,33 @@ class MainFrame(wx.Frame):
 			self.currFile = Savegame.Savegame(new_file)
 			self.update_ui()
 
+			#TODO:
+			#- Close current file (prompting for unsaved changes if any)
+			#- Delete tree before starting
+			#- Disable UI until done
+			
 			def _t():
 				# First of all, load da save			
-				callback = Callback.Callback(self, self.loader_callback)
-				self.currFile.load(callback)
-				del callback
+				l_callback = Callback.Callback(self, self.loader_callback)
+				self.currFile.load(l_callback)
+				del l_callback
+				sleep(0.0001)
 				# Next up, check for errors
-				#callback = Callback.Callback(self, self.checker_callback)
-				#self.currFile.load(callback)
-				#del callback
+				v_callback = Callback.Callback(self, self.checker_callback, 0)
+				validator = Validator.Validator(self.currFile)
+				validator.validate(v_callback)
+				del validator
+				del v_callback
+				sleep(0.0001)
 				# Finally, present some tree contents
-				callback = Callback.Callback(self, self.builder_callback, 0)
-				self.treeview.setup(self.currFile, callback)
-				del callback
-				
-			#_t()
+				b_callback = Callback.Callback(self, self.builder_callback, 0)
+				self.treeview.setup(self.currFile, b_callback)
+				del b_callback
+				sleep(0.0001)
+				# Before exiting, send an update request
+				#self.update_ui()
+
+			# Do the hard work in a background thread
 			t = threading.Thread(target=_t)
 			t.start()
 			
@@ -175,13 +201,17 @@ class MainFrame(wx.Frame):
 		pass
 			
 	def onFileClose(self, event):
-		pass
+		self.treeview.DeleteAllItems()
+		#TODO: Check change state before closing
+		self.currFile = None
+		self.update_ui()
 			
 	def onFileExit(self, event):
 		#self.app_ready()
 		#self.__shutdown = True
 		#while not self.__terminated:
 		#	sleep(0.05)
+		self.onFileClose(None)
 		self.Close(True)
 			
 
@@ -285,34 +315,31 @@ class MainFrame(wx.Frame):
 			self.update_ui()
 
 	def checker_callback(self, event):
-		"""
 		if event.which == Callback.Callback.START:
 			self.set_busy()
-			self.update_statusbar("Loading file ...")
+			self.update_statusbar("Sorting out stones ...")#"Checking objects ...")
 			self.show_progressbar(event.maxval)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			self.update_progressbar(event.val)
 			
 		elif event.which == Callback.Callback.END:
-			self.update_statusbar("Done loading")
+			self.update_statusbar("Done sorting")#"Done checking")
 			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
-		"""
-		pass
 
 	def builder_callback(self, event):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
-			self.update_statusbar("Growing banana tree ...")
+			self.update_statusbar("Growing banana tree ...")#"Populating tree ...")
 			self.show_progressbar(event.maxval)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			self.update_progressbar(event.val)
 			
 		elif event.which == Callback.Callback.END:
-			self.update_statusbar("Done growing, enjoy")
+			self.update_statusbar("Done growing, enjoy")#"Done populating")
 			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
