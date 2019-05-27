@@ -3,7 +3,6 @@ All the panels needed for displaying savegame data
 """
 
 import wx
-import wx.richtext
 
 
 """
