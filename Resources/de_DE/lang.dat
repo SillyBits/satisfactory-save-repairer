@@ -1,8 +1,8 @@
 {
 	"&File": "&Datei",
-	"&Open...\tCtrl+O": "Ö&ffnen...\tStrg+O",
+	"&Open...\tCtrl+O": "Ö&ffnen...\tCtrl+O",
 	"Opens a save game": "Öffnet einen Spielstand",
-	"C&lose\tCtrl+W": "Sch&ließen\tStrg+W",
+	"C&lose\tCtrl+W": "Sch&ließen\tCtrl+W",
 	"Closes save": "Schließt den derzeit geöffneten Spielstand",
 	"E&xit": "Be&enden",
 	"Terminate program": "Beendet das Programm",
