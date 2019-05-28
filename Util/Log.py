@@ -19,7 +19,7 @@ __logfile = None
 __log_min_severity = -1
 __log_severity = [ "DEBUG", "INFO", "ERROR" ]	
 
-def InitLog(self, appname, apppath, min_severity=LOG_INFO):
+def InitLog(appname, apppath, min_severity=LOG_INFO):
 	__log_min_severity = min_severity
 
 	__logpath = os.path.join(apppath, "logs")
