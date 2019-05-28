@@ -65,6 +65,7 @@ class Savegame:
 
 		try:		
 			self.Header = Property.Header().read(reader)
+			self.__total = 1
 			self.__cb_read_update(reader)
 			
 			self.Objects = []
@@ -77,26 +78,39 @@ class Savegame:
 				elif _type == 0:
 					obj = Property.Object()
 				else:
-					raise AssertionError("Savegame at pos {}: Unknown type {}"\
+					raise AssertionError("Savegame at pos {}: Unhandled type {}"\
 										.format(prev_pos, _type))
-				self.Objects.append(obj.read(reader))
+				new_child = obj.read(reader) 
+				self.Objects.append(new_child)
+				#childs = new_child.Childs
+				#if childs:
+				#	self.__total += self.__count_recurs(childs)
+				#-> Entity not yet read, so down below instead
 				self.__cb_read_update(reader)
 				
 			count_ = reader.readInt()
 			assert count == count_
 	
-			#TODO: 2nd object fails badly :(		
 			for obj in self.Objects:
 				obj.read_entity(reader)
+				childs = obj.Childs
+				if childs:
+					self.__total += self.__count_recurs(childs)
 				self.__cb_read_update(reader)
 	
 			self.Collected = []
 			count = reader.readInt()
 			for i in range(count):
-				self.Collected.append(Property.Collected().read(reader))
+				new_child = Property.Collected().read(reader)
+				self.Collected.append(new_child)
+				childs = new_child.Childs
+				if childs:
+					self.__total += self.__count_recurs(childs)
 				self.__cb_read_update(reader)
 	
 			self.Missing = reader.readNByte(reader.Size - reader.Pos)
+			if self.Missing and len(self.Missing):
+				self.__total += 1
 			self.__cb_read_update(reader)
 			
 
@@ -113,8 +127,8 @@ class Savegame:
 			raise
 		
 		finally:
-			self.__update_totals()
-			sleep(1)
+			#self.__update_totals() -> Now done while loading
+			sleep(0.01)
 			self.__cb_read_end(reader)
 			del reader
 
@@ -125,38 +139,58 @@ class Savegame:
 		del writer
 
 
+	'''
 	def __update_totals(self):
-		# Count total number of elemts avail
-		self.__total = 0
+		# Count total number of elements avail
+		self.__total = 1 # <- Header
+		self.__depth = 0
 				
 		for obj in self.Objects:
+			#print(("  "*self.__depth)+"Counting on '{}'".format(obj))
 			self.__total += 1
 			childs = obj.Childs
 			if childs:
-				self.__total += self._count_recurs(childs)
+				self.__total += self.__count_recurs(childs)
 				
-		#self.__total += 1 + len(
+		#self.__total += len(self.Collected)
+		# Does this entry even need more depth analysis? 
+		# For debugging purposes, we just do it
 		for obj in self.Collected:
 			self.__total += 1
-			# Does this entry need more depth analysis?
-
-	def _count_recurs(self, childs):
+			childs = obj.Childs
+			if childs:
+				self.__total += self.__count_recurs(childs)
+	-> This step now done while loading, but __count_recurs below needed still
+	'''
+		
+	def __count_recurs(self, childs):
+		#print(("  "*self.__depth)+"- Recursing on {}".format(childs))
+		#self.__depth += 1
 		count = 0
 		for name in childs:
+			#print(("  "*self.__depth)+"Counting recurs on " + name)
 			sub = childs[name]
 
 			count += 1
 			if isinstance(sub, (list,dict)):
 				for obj in sub:
-					count += 1
-					childs = obj.Childs
-					if childs:
-						count += self._count_recurs(childs)
+					if isinstance(sub, Property.Accessor):
+						count += 1
+						sub_childs = obj.Childs
+						if sub_childs:
+							count += self.__count_recurs(sub_childs)
+					#else:
+					#	print(("  "*self.__depth)+"Skipping child '{}'".format(obj))
+						
 			else:
-				childs = sub.Childs
-				if childs:
-					count += self._count_recurs(childs)
+				if isinstance(sub, Property.Accessor):
+					sub_childs = sub.Childs
+					if sub_childs:
+						count += self.__count_recurs(sub_childs)
+					#else:
+					#	print(("  "*self.__depth)+"Skipping child '{}'".format(sub))
 
+		#self.__depth -= 1
 		return count
 
 

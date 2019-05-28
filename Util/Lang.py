@@ -11,6 +11,9 @@ import json
 
 import wx
 
+from Util \
+	import Log
+
 
 class Lang:
 
@@ -39,7 +42,7 @@ class Lang:
 		if Lang.LANG != "en_US":
 			if source in Lang.LANGTABLE:
 				return Lang.LANGTABLE[source]
-			print(u"Missing translation for: " + source)
+			Log.Log(u"!! Missing translation for: " + source, severity=Log.LOG_ERROR)
 		return source
 
 

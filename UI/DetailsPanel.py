@@ -22,11 +22,16 @@ class DetailsPanel(wx.StaticText):
 
 """
 
-class DetailsPanel(wx.HVScrolledWindow):
+class DetailsPanel(wx.Panel):
 	
 	def __init__(self, parent):
 		super().__init__(parent, size=(300,600))
+		self.__sizer = wx.FlexGridSizer(0, 0, 5, 5)
+		self.__sizer.AddGrowableRow(0, proportion=1)
+		self.__sizer.AddGrowableCol(0, proportion=1)
+		self.SetSizer(self.__sizer)
 		self.SetAutoLayout(True)
+		self.Layout()
 		self.__mode = DetailsPanel.MODE_NONE
 
 	def update(self, text, append=False):
@@ -47,26 +52,33 @@ class DetailsPanel(wx.HVScrolledWindow):
 			
 	def __delete_all(self):
 		self.__mode = DetailsPanel.MODE_NONE
-		self.DestroyChildren()
+		#self.DestroyChildren()
+		self.__sizer.Clear()
 
 	def __show_text(self, text, append=False):
 		if self.__mode != DetailsPanel.MODE_TEXT:
 			self.__delete_all()
-			wx.StaticText(self, label="")
-			#ctrl = wx.TextCtrl(self, style=wx.TE_READONLY|wx.TE_NOHIDESEL|wx.TE_MULTILINE|wx.TE_RICH2)#|wx.HSCROLL)
+			#ctrl = wx.StaticText(self, label="")#, style=wx.SUNKEN_BORDER)
+			ctrl = wx.TextCtrl(self, style=wx.TE_READONLY|wx.TE_NOHIDESEL|wx.TE_MULTILINE)#|wx.HSCROLL|wx.VSCROLL)#|wx.TE_RICH2)
 			#ctrl.HideNativeCaret()
 			#ctrl = wx.richtext.RichTextCtrl(self, style=wx.richtext.RE_MULTILINE|wx.richtext.RE_READONLY)
+			# Sadfully, caret can't be suppressed with those two controls :-/
 			#ctrl.Size = self.ClientSize
-			# Sadfully, caret can't be suppressed with those two controls, so no sel&copy :-/
+			self.__sizer.Add(ctrl, proportion=1, flag=wx.EXPAND)
+			self.__sizer.Layout()
 			self.__mode = DetailsPanel.MODE_TEXT
 
+		# Have not seen a method to reduce tab size with StaticText,
+		# so we just convert them down into simpe spaces
+		text_ = text.replace("\t", "    ")
+		
 		ctrl = self.GetChildren()[0]
 		if append:
-			ctrl.SetLabel(ctrl.GetLabel() + "\n" + text)
-			#ctrl.Value += "\r\n" + text
+			#ctrl.SetLabel(ctrl.GetLabel() + text_)
+			ctrl.Value += text_
 		else:
-			ctrl.SetLabel(text)
-			#ctrl.Value = text
+			#ctrl.SetLabel(text_)
+			ctrl.Value = text_
 
 	def __show_prop(self, prop):
 		self.__delete_all()
@@ -79,11 +91,11 @@ class DetailsPanel(wx.HVScrolledWindow):
 		
 		constr = globals()[t]
 		inst = constr(self)
-		inst.populate(self, prop)
-		#self.SetSizer(inst)
-		self.Layout()
-		
-		
+		ctrl = inst.populate(self, prop)
+		self.__sizer.Add(ctrl, proportion=1, flag=wx.EXPAND)
+		self.__sizer.Layout()
+
+
 		#TODO: Init panel, which might init more sub-panels itself
 		#TODO: Use a recursive method for all the hard work
 		'''

@@ -2,16 +2,15 @@
 import os
 
 
-'''
-To allow for abstract access to property values
+from Util \
+	import Log
 
-Quite some abuse here and there, but doing the "job" well
-'''
+
 class Accessor:
-
-	# List of reserved name not to be populated by 'Keys'
-	__reserved_names = [ "Keys", "Childs" ]
-
+	'''
+	To allow for abstract access to property values.
+	
+	'''
 
 	@property
 	def TypeName(self):
@@ -19,34 +18,60 @@ class Accessor:
 		Returns property name
 		'''
 		return self.__class__.__qualname__
-	
+
+
+	# List of reserved name to be skipped at all times
+	__reserved_names = [ 
+		"TypeName", "Keys", "Exclusions", "Childs",
+		"HasErrors", "Errors", "AddError",	
+	]
+	__keys = {}
+
 	@property
 	def Keys(self):
 		'''
-		Returns list of iterable properties
+		Returns list of iterable properties.
+		Will be cached for each property on first call 
 		'''
-		if not hasattr(self, Accessor.__prop_keys):
-			# Create new cache of keys avail
-			self.__keys = []
+		t = self.TypeName
+		if t not in Accessor.__keys:
+			# Create new cache entry for this type of property
+			keys = []
 			for member in dir(self):
 				if member.startswith('_'):
-					continue # Skip private members
-				if member in self.__reserved_names:
-					continue # A reserved name like 'Keys'
-				value = self[member]
-				if callable(value):
+					continue # Skip any private member
+				if member in Accessor.__reserved_names:
+					continue # A any reserved name like 'Keys'
+				#if member in self.Exclusions:
+				#	continue # Explicit exclusion
+				if callable(self[member]):
 					continue # Skip callables
-				self.__keys.append(member)
-		return self.__keys
-
+				keys.append(member)
+			Accessor.__keys[t] = keys
+			Log.Log("** New mapping for type {}\n   -> {}".format(t, keys), severity=Log.LOG_DEBUG)
+		return Accessor.__keys[t]
+	
+	"""
+	@property
+	def Exclusions(self):
+		'''
+		Returns a list of values to exclude
+		(NOT yet used)
+		''' 
+		return []
+	"""
+	
 	@property
 	def Childs(self):
 		'''
-		Returns list of childs to be processed as well
-		Might be removed in favour of Keys() and detecting sequences
+		Returns a dict of childs to be processed recursively
+		TO BE REMOVED -> Use .Keys and (indirectly) __getitem__
 		''' 
-		return None
-
+		childs = {}
+		for k in self.Keys:
+			childs[k] = self[k]
+		return childs
+	
 
 	@property
 	def HasErrors(self):
@@ -70,6 +95,8 @@ class Accessor:
 			self.__errors = []
 		self.__errors.append(info)
 
+	__prop_error = '_Accessor__errors'
+
 
 	def __getitem__(self, key):
 		v = object.__getattribute__(self, key)
@@ -85,9 +112,9 @@ class Accessor:
 		else:
 			v = value
 
+	def __str__(self):
+		return "[" + self.TypeName + "]"
 
-	__prop_keys = '_Accessor__keys'
-	__prop_error = '_Accessor__errors'
 
 
 '''
@@ -95,16 +122,6 @@ Actual save values following
 '''
 
 class Property(Accessor):
-	
-	Name = None
-	Length = 0
-	Index = 0
-	Value = None
-
-	#@property
-	#def Childs(self):
-	#	return None #{ 'Entity': self.Entity }
-
 
 	def __init__(self, name=None, length=None, index=None, value=None):
 		self.Name = name
@@ -129,7 +146,8 @@ class Property(Accessor):
 		length = reader.readInt()
 		index = reader.readInt()
 
-		inst = globals()[prop](name, length, index)
+		cls = globals()[prop]
+		inst = cls(name, length, index)
 		return inst.read(reader)
 
 
@@ -166,13 +184,16 @@ class Property(Accessor):
 
 
 class PropertyList(Accessor):
+	'''
+	Multiple properties of same type as array
+	'''
 	def __str__(self):
-		return '[{}] '.format(len(self.Value)) \
-			+ (getSafeStr(self.Value[0]) if len(self.Value) else '<?>')
-
-	@property
-	def Childs(self):
-		return { 'Values': self.Value }
+		s = "[{}].Value[0-{}]".format(self.TypeName, len(self.Value))
+		if len(self.Value):
+			s += "=[{}]".format(self.Value[0].TypeName)
+		return s 
+		#return '[{}] '.format(len(self.Value)) \
+		#	+ (getSafeStr(self.Value[0]) if len(self.Value) else '<?>')
 	
 	def read(self, reader):
 		self.Value = []
@@ -248,23 +269,14 @@ class Header(Accessor):
 
 class Collected(Accessor): #TODO: Find correct name, if any
 	def __str__(self):
-		return '[COLL] ' + self.PathName
+		return '[Collected] ' + self.PathName
 
-	@property
-	def Childs(self):
-		return None #{ 'Entity': self.Entity }
-	
 	def read(self, reader):
 		self.LevelName = reader.readStr()
 		self.PathName = reader.readStr()
 		return self
 
 class StructProperty(Property):
-	#TODO
-	#@property
-	#def Childs(self):
-	#	return { 'Entity': self.Entity }
-
 	def read(self, reader):
 		self.IsArray = False
 
@@ -302,6 +314,11 @@ class Vector(Accessor):
 		return self
 
 class Rotator(Vector): 
+	pass
+
+# 'Scale' is a pseudo-class and not contained, added for the 
+# validation step as different set of bounds must be used
+class Scale(Vector):
 	pass
 
 class Box(Accessor):
@@ -349,8 +366,9 @@ class RemovedInstance(PropertyList):
 	pass
 
 class InventoryStack(PropertyList):
-	def read(self, reader):
-		return PropertyList.read(self, reader)
+	pass
+	#def read(self, reader):
+	#	return PropertyList.read(self, reader)
 
 class InventoryItem(Accessor):#TODO: Might also be some PropertyList? Investigate	
 	def __str__(self):
@@ -401,11 +419,6 @@ class SplitterSortRule(PropertyList):
 	pass
 
 class ArrayProperty(Property):
-	#TODO
-	#@property
-	#def Childs(self):
-	#	return { 'Entity': self.Entity }
-
 	def read(self, reader):
 		self.InnerType = reader.readStr()
 		
@@ -454,10 +467,6 @@ class EnumProperty(Property):
 		return self
 	
 class NameProperty(StrProperty):
-	#def read(self, reader):
-	#	self.checkNullByte(reader)
-	#	self.value = reader.readStr()
-	#	return self
 	pass
 
 class MapProperty(Property):
@@ -487,11 +496,7 @@ class TextProperty(Property):
 
 class Entity(PropertyList):
 	def __str__(self):
-		return '[ENTITY] ' + getSafeStr(self.PathName)
-
-	#@property
-	#def Childs(self):
-	#	return None #{ 'Entity': self.Entity }
+		return '[Entity] ' + getSafeStr(self.PathName)
 	
 	def __init__(self, level_name=None, path_name=None, children=None):
 		self.LevelName = level_name
@@ -512,11 +517,7 @@ class Entity(PropertyList):
 
 class NamedEntity(Entity):
 	def __str__(self):
-		return '[ENTITY] ' + getSafeStr(self.PathName)
-
-	#@property
-	#def Childs(self):
-	#	return { 'Children': self.Children }
+		return '[NamedEntity] ' + getSafeStr(self.PathName)
 	
 	def read(self, reader, length):
 		last_pos = reader.Pos
@@ -540,11 +541,7 @@ class NamedEntity(Entity):
 
 class Object(Accessor):
 	def __str__(self):
-		return '[OBJ] ' + getSafeStr(self.ClassName)
-
-	@property
-	def Childs(self):
-		return { 'Entity': self.Entity }
+		return '[Object] ' + getSafeStr(self.ClassName)
 	
 	def read(self, reader):
 		self.Type = 0
@@ -560,11 +557,7 @@ class Object(Accessor):
 
 class Actor(Accessor):
 	def __str__(self):
-		return '[ACTOR] ' + getSafeStr(self.PathName)
-
-	@property
-	def Childs(self):
-		return { 'Entity': self.Entity }
+		return '[Actor] ' + getSafeStr(self.PathName)
 	
 	def read(self, reader):
 		self.Type = 1
@@ -574,7 +567,7 @@ class Actor(Accessor):
 		self.NeedTransform = reader.readInt()
 		self.Rotation = Quat().read(reader)
 		self.Translate = Vector().read(reader)
-		self.Scale = Vector().read(reader)
+		self.Scale = Scale().read(reader)
 		self.WasPlacedInLevel = reader.readInt()
 		return self
 

@@ -12,10 +12,10 @@ from datetime import datetime
 import wx
 
 from Savegame \
-	import Savegame, Validator
+	import Savegame, Property, Validator
 	 
 from Util \
-	import Options, Callback, Lang
+	import Options, Callback, Lang, Log
 
 from UI \
 	import OptionsDlg, AboutDlg, TreeView, DetailsPanel
@@ -25,20 +25,27 @@ class Application(wx.App):
 	def __init__(self):
 		self.__path = os.path.dirname(sys.argv[0])
 
-		# For distribution only!
-		# -> Create log file, and rename existing one as backup
-		logpath = os.path.join(self.__path, "logs")
-		if not os.path.isdir(logpath):
-			os.mkdir(logpath)
-		self.__logfile = os.path.join(logpath, "SatisfactorySaveChecker.log")
-		if os.path.isfile(self.__logfile):
-			mtime = datetime.fromtimestamp(os.path.getmtime(self.__logfile))
-			backup = "SatisfactorySaveChecker-" + mtime.strftime("%Y%m%d-%H%M%S") + ".log"
-			os.rename(self.__logfile, os.path.join(logpath, backup))
-		super().__init__(True, filename=self.__logfile, useBestVisual=True)
-		# For development only!
-		# -> Let IDE show messages in its output pane
-		#super().__init__(False, useBestVisual=True)
+		if 'SSR_DEBUG' in os.environ:
+			# For development only!
+			# -> Let IDE show messages in its output pane
+			#super().__init__(False, useBestVisual=True)
+			self.__logfile = None
+		else:
+			# For distribution only!
+			# -> Create log file, and rename existing one as backup
+			"""
+			logpath = os.path.join(self.__path, "logs")
+			if not os.path.isdir(logpath):
+				os.mkdir(logpath)
+			self.__logfile = os.path.join(logpath, "SatisfactorySaveChecker.log")
+			if os.path.isfile(self.__logfile):
+				mtime = datetime.fromtimestamp(os.path.getmtime(self.__logfile))
+				backup = "SatisfactorySaveChecker-" + mtime.strftime("%Y%m%d-%H%M%S") + ".log"
+				os.rename(self.__logfile, os.path.join(logpath, backup))
+			#super().__init__(True, filename=self.__logfile, useBestVisual=True)
+			"""
+			self.__logfile = Log.InitLog("SatisfactorySaveChecker", self.__path)
+		super().__init__(self.__logfile != None, filename=self.__logfile, useBestVisual=True)
 
 		# Do additional groundwork
 		Lang.Lang.load(None, os.path.join(self.Path, "Resources"))
@@ -51,14 +58,14 @@ class Application(wx.App):
 	def Path(self): 
 		return self.__path
 
-
+"""
 def Log(text:str, add_ts:bool=True, add_newline:bool=True):
 	if add_ts:
 		text = "[{}] ".format(datetime.now()) + text
 	if add_newline:
 		text += "\n"
 	print(text, end='')
-
+"""
 
 
 class MainFrame(wx.Frame):
@@ -67,7 +74,7 @@ class MainFrame(wx.Frame):
 	
 
 	def __init__(self, parent=None):
-		Log("Starting up...")
+		Log.Log("Starting up...")
 		super().__init__(parent, title="", size=(800,480))
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -202,14 +209,16 @@ class MainFrame(wx.Frame):
 			#- Disable UI until done
 			
 			def _t():
-				Log("Loading file: " + new_file)
 				# First of all, load da save			
+				Log.Log("Loading file:\n  -> " + new_file)
 				l_callback = Callback.Callback(self, self.loader_callback)
 				self.currFile.load(l_callback)
 				sleep(0.0001)
 				del l_callback
 				sleep(0.0001)
+				Log.Log("Finished loading")
 				# Next up, check for errors
+				Log.Log("Validating objects")
 				v_callback = Callback.Callback(self, self.checker_callback, 0)
 				validator = Validator.Validator(self.currFile)
 				validator.validate(v_callback)
@@ -217,21 +226,26 @@ class MainFrame(wx.Frame):
 				del validator
 				del v_callback
 				sleep(0.0001)
+				Log.Log("Finished validating")
 				'''
 				# Finally, present some tree contents
+				Log.Log("Building tree")
 				b_callback = Callback.Callback(self, self.builder_callback, 0)
 				self.treeview.setup(self.currFile, b_callback)
 				sleep(0.0001)
 				del b_callback
+				sleep(0.0001)
+				Log.Log("Finished building tree")
 				'''
+				Log.Log("Creating report")
 				r_callback = Callback.Callback(self, self.result_callback, 0)
 				self.show_results(r_callback)
 				sleep(0.0001)
 				del r_callback
 				sleep(0.0001)				
+				Log.Log("Finished reporting")
 				# Before exiting, send an update request
 				#self.update_ui()
-				Log("Finished loading")
 
 			# Do the hard work in a background thread
 			t = threading.Thread(target=_t)
@@ -260,7 +274,7 @@ class MainFrame(wx.Frame):
 		
 		
 	def onClose(self, event):
-		Log("Shutting down...")
+		Log.Log("Shutting down...")
 		event.Skip()
 			
 
@@ -437,6 +451,7 @@ class MainFrame(wx.Frame):
 		
 		total = self.currFile.TotalElements		
 		self.__cb_results_start(total)
+		sleep(0.01)
 		
 		for obj in self.currFile.Objects:
 			self.__show_results(obj)
@@ -445,22 +460,31 @@ class MainFrame(wx.Frame):
 			self.__show_results(obj)
 
 		if not self.__error_count:
-			self.__cb_results_update(_("No errors found"))
+			s = ("\n"*10) + _("No errors found") + ("\n"*10)
 		else:
-			self.__cb_results_update("\n\n"+_("A total of {} errors found!").format(self.__error_count))
+			s = "\n\n"+_("A total of {} errors found!").format(self.__error_count)
+		Log.Log(s, add_newline=False, add_ts=False)
+		self.__cb_results_update(s)
+		sleep(0.01)
 		self.__cb_results_end()
 
 	def __show_results(self, obj):
 		self.__results_count += 1
-		if obj.HasErrors:
-			self.__error_count += 1
-			s = str(obj) + "\n"
-			for e in obj.Errors:
-				s += ("\t"*self.__indent) + e + "\n"  
-			self.__cb_results_update(s)
-			childs = obj.Childs
-			if childs:
-				self.__show_results_recurs(childs)
+		if isinstance(obj, Property.Accessor):
+			if obj.HasErrors:
+				if not self.__indent: # Count as error only on top level?
+					self.__error_count += 1
+				s = "" if self.__indent else "\n"
+				s += ("\t"*self.__indent) + str(obj) + "\n"
+				#self.__indent += 1
+				for e in obj.Errors:
+					s += ("\t"*self.__indent) + e + "\n"
+				Log.Log(s, add_newline=False, add_ts=False)  
+				self.__cb_results_update(s)
+				childs = obj.Childs
+				if childs:
+					self.__show_results_recurs(childs)
+				#self.__indent -= 1
 				
 	def __show_results_recurs(self, childs):
 		self.__indent += 1
