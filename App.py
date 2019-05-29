@@ -460,7 +460,7 @@ class MainFrame(wx.Frame):
 			self.__show_results(obj)
 
 		if not self.__error_count:
-			s = ("\n"*10) + _("No errors found") + ("\n"*10)
+			s = "\n" + _("No errors found")
 		else:
 			s = "\n\n"+_("A total of {} errors found!").format(self.__error_count)
 		Log.Log(s, add_newline=False, add_ts=False)
