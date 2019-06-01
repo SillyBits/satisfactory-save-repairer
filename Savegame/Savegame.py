@@ -60,7 +60,7 @@ class Savegame:
 	def __load(self, callback):
 		self.__callback = callback
 		
-		reader = Reader.Reader(self.__filename)
+		reader = Reader.FileReader(self.__filename)
 		self.__cb_read_start(reader)
 
 		try:		
@@ -117,7 +117,7 @@ class Savegame:
 		except Property.Property.PropertyReadException as exc:
 			print(exc)
 			raise
-		except Reader.Reader.ReadException as exc:
+		except Reader.ReaderBase.ReadException as exc:
 			print(exc)
 			raise
 			
@@ -139,30 +139,6 @@ class Savegame:
 		del writer
 
 
-	'''
-	def __update_totals(self):
-		# Count total number of elements avail
-		self.__total = 1 # <- Header
-		self.__depth = 0
-				
-		for obj in self.Objects:
-			#print(("  "*self.__depth)+"Counting on '{}'".format(obj))
-			self.__total += 1
-			childs = obj.Childs
-			if childs:
-				self.__total += self.__count_recurs(childs)
-				
-		#self.__total += len(self.Collected)
-		# Does this entry even need more depth analysis? 
-		# For debugging purposes, we just do it
-		for obj in self.Collected:
-			self.__total += 1
-			childs = obj.Childs
-			if childs:
-				self.__total += self.__count_recurs(childs)
-	-> This step now done while loading, but __count_recurs below needed still
-	'''
-		
 	def __count_recurs(self, childs):
 		#print(("  "*self.__depth)+"- Recursing on {}".format(childs))
 		#self.__depth += 1
