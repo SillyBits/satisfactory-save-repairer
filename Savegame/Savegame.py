@@ -64,7 +64,7 @@ class Savegame:
 		self.__cb_read_start(reader)
 
 		try:		
-			self.Header = Property.Header().read(reader)
+			self.Header = Property.Header(self).read(reader)
 			self.__total = 1
 			self.__cb_read_update(reader)
 			
@@ -74,9 +74,9 @@ class Savegame:
 				prev_pos = reader.Pos
 				_type = reader.readInt()
 				if _type == 1:
-					obj = Property.Actor()
+					obj = Property.Actor(self)
 				elif _type == 0:
-					obj = Property.Object()
+					obj = Property.Object(self)
 				else:
 					raise AssertionError("Savegame at pos {}: Unhandled type {}"\
 										.format(prev_pos, _type))
@@ -101,7 +101,7 @@ class Savegame:
 			self.Collected = []
 			count = reader.readInt()
 			for i in range(count):
-				new_child = Property.Collected().read(reader)
+				new_child = Property.Collected(self).read(reader)
 				self.Collected.append(new_child)
 				childs = new_child.Childs
 				if childs:
