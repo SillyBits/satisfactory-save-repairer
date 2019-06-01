@@ -1,4 +1,6 @@
 {
+	"Satisfactory Savegame Checker": "Satisfactory Spielstand Überprüfer",
+
 	"&File": "&Datei",
 	"&Open...\tCtrl+O": "Ö&ffnen...\tCtrl+O",
 	"Opens a save game": "Öffnet einen Spielstand",
@@ -8,11 +10,18 @@
 	"Terminate program": "Beendet das Programm",
 	"&Help": "&Hilfe",
 	"&About...": "Ü&ber...",
-	"Information about this program": "Informationen Über dieses Programm",
-	"Satisfactory Savegame Checker": "Satisfactory Spielstand Überprüfer",
+	"Informations about this program": "Informationen Über dieses Programm",
+
 	"Ready ...": "Bereit ...",
+
 	"About Satisfactory Savegame Checker": "Über Satisfactory Spielstand Überprüfer",
+
 	"OK": "Ok",
+	"Cancel": "Abbrechen",
+	"Abort": "Abbrechen",
+	"Yes": "Ja",
+	"No": "Nein",
+
 	"Select savegame to load": "Spielstand auswählen",
 	"Savegames": "Spielstände",
 	"All files": "Alle Dateien",

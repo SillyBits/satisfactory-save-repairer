@@ -7,7 +7,6 @@ import sys
 import os
 import threading
 from time import sleep
-from datetime import datetime
 
 import wx
 
@@ -22,6 +21,9 @@ from UI \
 
 
 class Application(wx.App):
+
+	__appname = "SatisfactorySaveChecker"
+	
 	def __init__(self):
 		self.__path = os.path.dirname(sys.argv[0])
 
@@ -33,39 +35,33 @@ class Application(wx.App):
 		else:
 			# For distribution only!
 			# -> Create log file, and rename existing one as backup
-			"""
-			logpath = os.path.join(self.__path, "logs")
-			if not os.path.isdir(logpath):
-				os.mkdir(logpath)
-			self.__logfile = os.path.join(logpath, "SatisfactorySaveChecker.log")
-			if os.path.isfile(self.__logfile):
-				mtime = datetime.fromtimestamp(os.path.getmtime(self.__logfile))
-				backup = "SatisfactorySaveChecker-" + mtime.strftime("%Y%m%d-%H%M%S") + ".log"
-				os.rename(self.__logfile, os.path.join(logpath, backup))
-			#super().__init__(True, filename=self.__logfile, useBestVisual=True)
-			"""
-			self.__logfile = Log.InitLog("SatisfactorySaveChecker", self.__path)
+			self.__logfile = Log.InitLog(self.__appname, self.__path)
 		super().__init__(self.__logfile != None, filename=self.__logfile, useBestVisual=True)
 
+		self.AppName = self.__appname
+
+		# Below should be dealt with in OnInit?
+		
 		# Do additional groundwork
-		Lang.Lang.load(None, os.path.join(self.Path, "Resources"))
+		Lang.Lang.load(None, os.path.join(self.__path, "Resources"))
 		
 		wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
 		wx.Image.AddHandler(wx.PNGHandler())
 
+
+	#def OnInit(self, *args, **kwargs):
+	#	return wx.App.OnInit(self, *args, **kwargs)
+	
+	#def OnExit(self, *args, **kwargs):
+	#	# Should clean up stuff like config
+	#	wx.Config.Set(None)
+	#	return wx.App.OnExit(self, *args, **kwargs)		
+
+	
 	@property
 	def Path(self): 
 		return self.__path
-
-"""
-def Log(text:str, add_ts:bool=True, add_newline:bool=True):
-	if add_ts:
-		text = "[{}] ".format(datetime.now()) + text
-	if add_newline:
-		text += "\n"
-	print(text, end='')
-"""
 
 
 class MainFrame(wx.Frame):
@@ -91,6 +87,8 @@ class MainFrame(wx.Frame):
 		self.Center()
 		self.set_idle()
 
+		wx.App.Get().SetTopWindow(self)
+		
 
 	'''
 	UI generation
@@ -127,7 +125,7 @@ class MainFrame(wx.Frame):
 		
 		helpmenu = wx.Menu()
 		self.menuBar.Append(helpmenu, _("&Help"))
-		_add(helpmenu, _("&About..."), _("Information about this program"), self.onHelpAbout, wx.ID_ABOUT)
+		_add(helpmenu, _("&About..."), _("Informations about this program"), self.onHelpAbout, wx.ID_ABOUT)
 
 	def create_toolbars(self, parent):
 		#TODO: Add 'Next' + 'Prev' error buttons to navigate in tree
@@ -352,10 +350,10 @@ class MainFrame(wx.Frame):
 	Helpers
 	'''
 
-	def get_title(self):
+	def get_title(self, raw=False):
 		#s = "Satisfactory Save Repairer"
 		s = _("Satisfactory Savegame Checker")
-		if self.currFile:
+		if self.currFile and not raw:
 			s += " - " + self.currFile.Filename
 		return s
 
@@ -476,7 +474,6 @@ class MainFrame(wx.Frame):
 					self.__error_count += 1
 				s = "" if self.__indent else "\n"
 				s += ("\t"*self.__indent) + str(obj) + "\n"
-				#self.__indent += 1
 				for e in obj.Errors:
 					s += ("\t"*self.__indent) + e + "\n"
 				Log.Log(s, add_newline=False, add_ts=False)  
@@ -484,7 +481,6 @@ class MainFrame(wx.Frame):
 				childs = obj.Childs
 				if childs:
 					self.__show_results_recurs(childs)
-				#self.__indent -= 1
 				
 	def __show_results_recurs(self, childs):
 		self.__indent += 1
@@ -502,30 +498,6 @@ class MainFrame(wx.Frame):
 '''
 Main
 '''
-
-#print(font.families())
-
-#_options = Options.Options("SatisfactorySaveChecker.ini")
-
-#root = tk.Tk()
-#root.option_add('*tearOff', FALSE)
-#
-##TODO: Use _options to position to previously used position
-#if _options.geometry.lower() == "zoomed":
-#	root.wm_state("zoomed")
-#else:
-#	root.geometry(_options.geometry)
-#
-#app = Application(master=root)
-#app.mainloop()
-#
-#TODO: Get geometry before window is being destroyed. But how?
-#'''
-#if root.wm_state() == "zoomed":
-#	_options.geometry = "zoomed"
-#else:
-#	_options.geometry = root.geometry()
-#'''
 
 app = Application()
 
