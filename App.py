@@ -272,6 +272,7 @@ class MainFrame(wx.Frame):
 		
 		
 	def onClose(self, event):
+		wx.App.Get().SetTopWindow(None)
 		Log.Log("Shutting down...")
 		event.Skip()
 			
