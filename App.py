@@ -17,7 +17,7 @@ from Util \
 	import Options, Callback, Lang, Log
 
 from UI \
-	import OptionsDlg, AboutDlg, TreeView, DetailsPanel
+	import OptionsDlg, AboutDlg, ChangelogDlg, TreeView, DetailsPanel
 
 
 class Application(wx.App):
@@ -42,7 +42,6 @@ class Application(wx.App):
 
 		# Below should be dealt with in OnInit?
 		
-		# Do additional groundwork
 		Lang.Lang.load(None, os.path.join(self.__path, "Resources"))
 		
 		wx.FileSystem.AddHandler(wx.MemoryFSHandler())
@@ -125,6 +124,7 @@ class MainFrame(wx.Frame):
 		
 		helpmenu = wx.Menu()
 		self.menuBar.Append(helpmenu, _("&Help"))
+		_add(helpmenu, _("&Changelog..."), _("Show changelog"), self.onHelpChangelog)
 		_add(helpmenu, _("&About..."), _("Informations about this program"), self.onHelpAbout, wx.ID_ABOUT)
 
 	def create_toolbars(self, parent):
@@ -282,6 +282,9 @@ class MainFrame(wx.Frame):
 	#	#	self.update_ui()
 	#	pass
 
+
+	def onHelpChangelog(self, event):
+		ChangelogDlg.ChangelogDlg(self).ShowModal()
 
 	def onHelpAbout(self, event):
 		AboutDlg.AboutDlg(self).ShowModal()

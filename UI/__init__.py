@@ -1,7 +1,8 @@
 
 __all__ = [
 	"OptionsDlg",
-	"AboutDlg", 
+	"AboutDlg",
+	"ChangelogDlg",
 	"TreeView",
 	"DetailsPanel",
 ]

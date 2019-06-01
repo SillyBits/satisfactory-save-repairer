@@ -9,12 +9,17 @@
 	"E&xit": "Be&enden",
 	"Terminate program": "Beendet das Programm",
 	"&Help": "&Hilfe",
+	"&Changelog...": "Än&derungen...",
+	"Show changelog": "Zeigt Änderungsprotokoll an",
 	"&About...": "Ü&ber...",
-	"Informations about this program": "Informationen Über dieses Programm",
+	"Informations about this program": "Informationen über dieses Programm",
 
 	"Ready ...": "Bereit ...",
 
-	"About Satisfactory Savegame Checker": "Über Satisfactory Spielstand Überprüfer",
+	"About Satisfactory Savegame Checker": 
+		"Über Satisfactory Spielstand Überprüfer",
+	
+	"Changelog": "Änderungsprotokoll",
 
 	"OK": "Ok",
 	"Cancel": "Abbrechen",
