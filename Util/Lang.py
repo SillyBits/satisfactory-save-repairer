@@ -38,12 +38,22 @@ class Lang:
 				Lang.LANGTABLE = content
 
 	@staticmethod
-	def translate(source:str):
-		if Lang.LANG != "en_US":
-			if source in Lang.LANGTABLE:
-				return Lang.LANGTABLE[source]
-			Log.Log(u"!! Missing translation for: " + source, severity=Log.LOG_ERROR)
-		return source
+	def translate(*source):
+		if Lang.LANG == "en_US":
+			return ''.join(source)
+
+		trans = ""
+		for entry in source:
+			if entry in ("\n","\t"):
+				trans += entry
+			elif entry in Lang.LANGTABLE:
+				trans += Lang.LANGTABLE[entry]
+			else:
+				Log.Log(u"Missing translation for: " + entry,
+					severity=Log.LOG_ERROR)
+		return trans
+
+
 
 
 import builtins
