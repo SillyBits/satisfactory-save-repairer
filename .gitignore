@@ -4,4 +4,6 @@ build
 dist
 virt_env
 logs
+reports
+SatisfactorySaveChecker.ini
 SatisfactorySaveChecker.spec
