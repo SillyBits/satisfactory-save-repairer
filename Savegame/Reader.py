@@ -10,7 +10,7 @@ import struct
 TYPE_INT   = struct.Struct('i')
 TYPE_FLOAT = struct.Struct('f')
 TYPE_LONG  = struct.Struct('q')
-TYPE_BYTE  = struct.Struct('b')
+TYPE_BYTE  = struct.Struct('B')
 
 
 class Reader:
