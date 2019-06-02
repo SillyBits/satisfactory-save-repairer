@@ -8,6 +8,9 @@
 	"Closes save": "Schließt den derzeit geöffneten Spielstand",
 	"E&xit": "Be&enden",
 	"Terminate program": "Beendet das Programm",
+	"E&dit": "Be&arbeiten",
+	"&Options...": "Optionen...",
+	"Opens options dialog": "Öffnet Optionsdialog",
 	"&Help": "&Hilfe",
 	"&Changelog...": "Än&derungen...",
 	"Show changelog": "Zeigt Änderungsprotokoll an",
@@ -16,7 +19,12 @@
 
 	"Ready ...": "Bereit ...",
 
-	"About Satisfactory Savegame Checker": 
+	"Options": "Optionen",
+	"Save": "Speichern",
+	"Feature is active": "Feature ist aktiv",
+	"On startup, do not ask again": "Bei Programmstart nicht wieder nachfragen",
+
+	"About Satisfactory Savegame Checker":
 		"Über Satisfactory Spielstand Überprüfer",
 	
 	"Changelog": "Änderungsprotokoll",
@@ -27,22 +35,53 @@
 	"Yes": "Ja",
 	"No": "Nein",
 
+	"Would you like to activate this feature now?":
+		"Möchtest Du dieses Feature jetzt aktivieren?",
+	"Note: This dialog will only be shown once, this feature":
+		"Hinweis: Dieser Dialog wird nur einmalig angezeigt, dieses Feature",
+	"can also be en-/disabled in the options dialog later.":
+		"kann jederzeit im Optionsdialog konfiguriert werden.",
+
+	"Deep Analysis": "Tiefe Analyse",
+	"This program is capable of parsing any object-specific private data.":
+		"Dieses Programm ist fähig auch Objektspezifische private Daten zu analysieren.",
+	"This includes, for example, items on conveyors or wire connections.":
+		"Dies beinhaltet z.B. die Gegenstände auf einem Band oder Stromverbindungen.",
+	"But if activated, this will increase load times dramatically!":
+		"Wenn aktiv wird dies aber beträchtlichen Einfluss auf die Ladezeit haben!",
+	"So activate only in case normal analysis won't do.":
+		"Sollte nur aktiviert werden wenn die normale Analyse erfolglos war.",
+
+	"Incident Reports": "Berichte über Vorkommnisse",
+	"This program is capable of reporting yet unknown data.":
+		"Dieses Programm kann bis dato unbekannte Daten als Bericht versenden.",
+	"If activated, you'll be shown a report when unknown data was found and":
+		"Wenn aktiv wird Dir beim auffinden unbekannter Daten ein Bericht angezeigt",
+	"you're free to edit out any details you want before actual transmission.":
+		"und Du hast vor dem Absenden die Möglichkeit jegliches Detail zu editieren.",
+	"Sending such reports will help the author in advancing this program.":
+		"Solche Berichte helfen dem Author das Programm zu verbessern.",
+
 	"Select savegame to load": "Spielstand auswählen",
 	"Savegames": "Spielstände",
 	"All files": "Alle Dateien",
+
 	"Loading file ...": "Lade Spielstand ...",
 	"Done loading": "Spielstand geladen",
+
 	"Checking objects ...": "Überprüfe Objekte ...",
 	"Done checking": "Überprüfung abgeschlossen",
 	"Invalid value(s) for [{}]": "Ungültiger Wert für [{}]",
 	"Invalid value(s) for {}": "Ungültiger Wert für {}",
 	"Property": "Property",
 	"[{}] has one or more errors": "[{}] hat ein oder mehrere Fehler",
+
 	"Generating report ...": "Erzeuge Bericht ...",
 	"Done generating": "Berichterzeugung abgeschlossen",
 	"No errors found": "Keine Fehler gefunden",
 	"A total of {} errors found!": "Insgesamt {} Fehler gefunden!",
 
 	"<none>": "<leer>",	
+	" - ": " - ",
 	"": ""
 }

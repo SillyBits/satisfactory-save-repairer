@@ -42,6 +42,8 @@ class Application(wx.App):
 
 		# Below should be dealt with in OnInit?
 		
+		Options.Options(self.__appname, self.__path)
+
 		Lang.Lang.load(None, os.path.join(self.__path, "Resources"))
 		
 		wx.FileSystem.AddHandler(wx.MemoryFSHandler())
@@ -64,6 +66,9 @@ class Application(wx.App):
 
 
 class MainFrame(wx.Frame):
+
+	#TITLE = "Satisfactory Savegame Repairer"
+	TITLE = "Satisfactory Savegame Checker"
 
 	currFile = None
 	
@@ -88,6 +93,8 @@ class MainFrame(wx.Frame):
 
 		wx.App.Get().SetTopWindow(self)
 		
+		self.__check_first_time_options()
+
 
 	'''
 	UI generation
@@ -118,9 +125,9 @@ class MainFrame(wx.Frame):
 		filemenu.AppendSeparator()
 		_add(filemenu, _("E&xit"), _("Terminate program"), self.onFileExit, wx.ID_EXIT)
 
-		#editmenu = wx.Menu()
-		#self.MenuBar.Append(editmenu, _("E&dit"))
-		#_add(editmenu, _("&Options..."), _("Opens options dialog"), self.onEditOptions)
+		editmenu = wx.Menu()
+		self.MenuBar.Append(editmenu, _("E&dit"))
+		_add(editmenu, _("&Options..."), _("Opens options dialog"), self.onEditOptions)
 		
 		helpmenu = wx.Menu()
 		self.menuBar.Append(helpmenu, _("&Help"))
@@ -277,11 +284,8 @@ class MainFrame(wx.Frame):
 		event.Skip()
 			
 
-	#def onEditOptions(self, event):
-	#	#if OptionsDlg.OptionsDlg(self, _options).ShowModal() == wx.ID_OK:
-	#	#	#TODO: Save changes
-	#	#	self.update_ui()
-	#	pass
+	def onEditOptions(self, event):
+		OptionsDlg.OptionsDlg(self).ShowModal()
 
 
 	def onHelpChangelog(self, event):
@@ -355,8 +359,7 @@ class MainFrame(wx.Frame):
 	'''
 
 	def get_title(self, raw=False):
-		#s = "Satisfactory Save Repairer"
-		s = _("Satisfactory Savegame Checker")
+		s = _(MainFrame.TITLE)
 		if self.currFile and not raw:
 			s += " - " + self.currFile.Filename
 		return s
@@ -498,6 +501,47 @@ class MainFrame(wx.Frame):
 				self.__show_results(sub)
 		
 		self.__indent -= 1
+
+	def __check_first_time_options(self):
+
+		feature_info = _("Would you like to activate this feature now?","\n",
+						 "\n",
+						 "Note: This dialog will only be shown once, this feature","\n",
+						 "can also be en-/disabled in the options dialog later.")
+
+		if not wx.Config.Get().deep_analysis.asked:
+
+			caption = _(MainFrame.TITLE, " - ", "Deep Analysis")
+			msg = _("This program is capable of parsing any object-specific private data.","\n",
+					"\n",
+					"This includes, for example, items on conveyors or wire connections.","\n",
+					"But if activated, this will increase load times dramatically!","\n",
+					"So activate only in case normal analysis won't do.","\n",
+					"\n") + feature_info
+
+			res = wx.MessageBox(msg, caption, style=wx.YES_NO|wx.ICON_QUESTION|wx.CENTRE)
+
+			wx.Config.Get().deep_analysis.asked = True
+			wx.Config.Get().deep_analysis.enabled = (res == wx.YES)
+
+
+		if not wx.Config.Get().incident_report.asked:
+
+			caption = _(MainFrame.TITLE, " - ", "Incident Reports")
+			msg = _("This program is capable of reporting yet unknown data.","\n",
+					"\n",
+					"If activated, you'll be shown a report when unknown data was found and","\n",
+					"you're free to edit out any details you want before actual transmission.","\n",
+					"Sending such reports will help the author in advancing this program.","\n",
+					"\n") + feature_info
+
+			res = wx.MessageBox(msg, caption, style=wx.YES_NO|wx.ICON_QUESTION|wx.CENTRE)
+
+			wx.Config.Get().incident_report.asked = True
+			wx.Config.Get().incident_report.enabled = (res == wx.YES)
+
+		#TODO: Develop more features :D
+
 
 '''
 Main
