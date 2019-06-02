@@ -3,30 +3,33 @@ Basic logging
 """
 
 import os
+
 from datetime \
 	import datetime
-
 
 
 LOG_DEBUG = 0
 LOG_INFO  = 1
 LOG_ERROR = 2
 
-	
+
 __logpath = None
 __logfile = None
 
-__log_min_severity = -1
+__log_min_severity = LOG_DEBUG
 __log_severity = [ "DEBUG", "INFO", "ERROR" ]	
 
+
 def InitLog(appname, apppath, min_severity=LOG_INFO):
+	global __log_min_severity, __logpath, __logfile
+
 	__log_min_severity = min_severity
 
 	__logpath = os.path.join(apppath, "logs")
-	
+
 	if not os.path.isdir(__logpath):
 		os.mkdir(__logpath)
-		
+
 	__logfile = os.path.join(__logpath, appname + ".log")
 
 	if os.path.isfile(__logfile):
@@ -41,14 +44,14 @@ def Log(text:str, add_ts:bool=True, add_newline:bool=True, severity=LOG_INFO):
 	if severity < __log_min_severity:
 		return
 
-	s = ""
 	if add_ts:
-		s = "[{}]".format(datetime.now())
-	s += "[" + __log_severity[severity] + "] "
+		s = "[{}][{}] ".format(datetime.now(), __log_severity[severity])
+	else:
+		s = ""
 
 	s += text
 	if add_newline:
 		s += "\n"
-		
+
 	print(s, end='')
 
