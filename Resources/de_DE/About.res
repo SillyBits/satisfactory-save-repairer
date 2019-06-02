@@ -9,7 +9,7 @@ td { vertical-align:center; }
 <table width='100%'><tr>
 <td width='40'><img src='memory:logo.png' alt='Logo' width='32' height='32'/></td>
 <td>
-<b>Satisfactory Spielstand Überprüfer</b> - v0.2 alpha<br/>
+<b>Satisfactory Spielstand Überprüfer</b> - v0.3 alpha<br/>
 <b>&copy;2019 SillyBits</b>
 </td>
 </tr></table>

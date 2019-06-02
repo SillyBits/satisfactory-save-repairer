@@ -1,4 +1,4 @@
-'Satisfactory Savegame Checker' v0.2 alpha
+'Satisfactory Savegame Checker' v0.3 alpha
 (c) 2019 SillyBits
 
 
