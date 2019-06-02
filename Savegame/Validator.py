@@ -155,20 +155,12 @@ class Validator:
 		return outcome
 
 	def __v_BoolProperty(self, obj):
-		#if not (0 <= obj.Value <= 1):
-		#	Validator.__add_error(obj, "0 <= {} <= 1".format(obj.Value))
-		#	return False
-		#return True
 		if not Validator.__is_valid(obj.Value, 0, 1):
 			Validator.__add_error(obj, "0 <= {} <= 1".format(obj.Value))
 			return False
 		return True
 
 	def __v_Vector(self, obj, lowerbounds=None):
-		# Hate to do this, but else would add some high complexity to 
-		# __v_PropertyList and checking a Transform which can include "Scale3D"
-		if hasattr(obj, "Name") and obj.Name and obj.Name.lower().find("scale"):
-			return Validator.__v_3(obj, obj.X,obj.Y,obj.Z, Validator.LOWER_SCALE)
 		return Validator.__v_3(obj, obj.X,obj.Y,obj.Z, lowerbounds)
 
 	def __v_Rotator(self, obj):

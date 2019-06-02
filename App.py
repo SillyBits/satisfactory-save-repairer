@@ -12,7 +12,7 @@ import wx
 
 from Savegame \
 	import Savegame, Property, Validator
-	 
+
 from Util \
 	import Options, Callback, Lang, Log
 
@@ -41,11 +41,11 @@ class Application(wx.App):
 		self.AppName = self.__appname
 
 		# Below should be dealt with in OnInit?
-		
+
 		Options.Options(self.__appname, self.__path)
 
 		Lang.Lang.load(None, os.path.join(self.__path, "Resources"))
-		
+
 		wx.FileSystem.AddHandler(wx.MemoryFSHandler())
 
 		wx.Image.AddHandler(wx.PNGHandler())
@@ -71,7 +71,7 @@ class MainFrame(wx.Frame):
 	TITLE = "Satisfactory Savegame Checker"
 
 	currFile = None
-	
+
 
 	def __init__(self, parent=None):
 		Log.Log("Starting up...")
@@ -195,14 +195,12 @@ class MainFrame(wx.Frame):
 		else:
 			path = "C:/"
 
-		#new_file = os.path.join(path, "testfile.sav")
 		new_file = ''
 		dlg = wx.FileDialog(self, _("Select savegame to load"), path, "",\
 							_("Savegames") + " (*.sav)|*.sav|" + _("All files") + " (*.*)|*.*",\
 							wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
 			new_file = os.path.join(dlg.Directory, dlg.Filename)
-			#wx.MessageBox("Filename is: "+new_file, "File open")
 		
 		if len(new_file) > 0 and os.path.isfile(new_file):
 			self.currFile = Savegame.Savegame(new_file)
@@ -270,13 +268,8 @@ class MainFrame(wx.Frame):
 		self.update_ui()
 			
 	def onFileExit(self, event):
-		#self.app_ready()
-		#self.__shutdown = True
-		#while not self.__terminated:
-		#	sleep(0.05)
 		self.onFileClose(None)
 		self.Close(True)
-		
 		
 	def onClose(self, event):
 		wx.App.Get().SetTopWindow(None)
@@ -553,7 +546,5 @@ root = MainFrame()
 root.Show()
 
 app.MainLoop()
-
-#_options.save()
 
 sys.exit(0)

@@ -80,7 +80,6 @@ class Container:
 		if not name in self.__dict__:
 			return self.__create(name, default)
 		obj = object.__getattribute__(self, name)
-		#return object.__getattribute__(self, name)#.get()
 		if isinstance(obj, Property):
 			obj = obj.get()
 		return obj
@@ -88,7 +87,6 @@ class Container:
 	def set(self, name:str, value):
 		if not name in self.__dict__:
 			return self.__create(name, value)
-		#return object.__getattribute__(self, name)#.set(value)
 		obj = object.__getattribute__(self, name)
 		if isinstance(obj, Property):
 			obj = obj.set(value)
@@ -205,8 +203,10 @@ class Property:
 		self.path = path
 		self.default = default
 
+
 	def get(self):			pass
 	def set(self, value):	pass
+
 
 	'''
 	Private implementation
@@ -225,6 +225,7 @@ class Property:
 	def __gt__(self, other): return self.get() >  other
 	def __ge__(self, other): return self.get() >= other
 	def __bool__(self):      return self.get() == True
+
 
 class FloatProperty(Property):
 	def get(self):			return Config.Get().ReadFloat (self.path, self.default or 0.0)

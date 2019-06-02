@@ -212,12 +212,7 @@ class PropertyList(Accessor):
 	Multiple properties of same type as array
 	'''
 	def __str__(self):
-		s = "[{}].Value[0-{}]".format(self.TypeName, len(self.Value)-1)
-		#if len(self.Value): -> Plain wrong for mixed lists!
-		#	s += "=[{}]".format(self.Value[0].TypeName)
-		return s 
-		#return '[{}] '.format(len(self.Value)) \
-		#	+ (getSafeStr(self.Value[0]) if len(self.Value) else '<?>')
+		return "[{}].Value[0-{}]".format(self.TypeName, len(self.Value)-1)
 	
 	def read(self, reader):
 		self.Value = []
@@ -395,8 +390,6 @@ class RemovedInstance(PropertyList):
 
 class InventoryStack(PropertyList):
 	pass
-	#def read(self, reader):
-	#	return PropertyList.read(self, reader)
 
 class InventoryItem(Accessor):#TODO: Might also be some PropertyList? Investigate	
 	def __str__(self):
