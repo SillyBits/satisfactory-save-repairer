@@ -1,5 +1,6 @@
 __pycache__
 __unused
+__releases
 build
 dist
 virt_env
