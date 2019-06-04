@@ -10,6 +10,10 @@ from time import sleep
 
 import wx
 
+from wx.lib \
+    import newevent
+
+
 from Savegame \
 	import Savegame, Property, Validator
 
@@ -87,6 +91,9 @@ class MainFrame(wx.Frame):
 			size = wx.Size(800,480)
 
 		super().__init__(parent, title="", pos=pos, size=size)
+
+		self.__update_event_class, self.__update_event = newevent.NewEvent()
+		self.Bind(self.__update_event, self.onUpdateUI)
 
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -259,6 +266,7 @@ class MainFrame(wx.Frame):
 				Log.Log("Finished reporting")
 				# Before exiting, send an update request
 				#self.update_ui()
+				wx.PostEvent(self, self.__update_event_class())
 
 			# Do the hard work in a background thread
 			t = threading.Thread(target=_t)
@@ -306,6 +314,9 @@ class MainFrame(wx.Frame):
 		cfg.window.size_x, cfg.window.size_y = self.Size
 		Log.Log("Shutting down...")
 		event.Skip()
+
+	def onUpdateUI(self, event):
+		self.update_ui()
 
 
 	'''
