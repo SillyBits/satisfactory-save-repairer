@@ -75,7 +75,19 @@ class MainFrame(wx.Frame):
 
 	def __init__(self, parent=None):
 		Log.Log("Starting up...")
-		super().__init__(parent, title="", size=(800,480))
+
+		cfg = wx.Config.Get()
+		if cfg.window.pos_x >= 0:
+			pos = wx.Point(int(cfg.window.pos_x), int(cfg.window.pos_y))
+		else:
+			pos = wx.DefaultPosition
+		if cfg.window.size_x > 0:
+			size = wx.Size(cfg.window.size_x, cfg.window.size_y)
+		else:
+			size = wx.Size(800,480)
+
+		super().__init__(parent, title="", pos=pos, size=size)
+
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 
 		file = os.path.join(wx.App.Get().Path, "Resources/Logo-128x128.png")
@@ -88,7 +100,8 @@ class MainFrame(wx.Frame):
 		#self.update_tree()
 
 		self.Show()
-		self.Center()
+		if pos == wx.DefaultPosition:
+			self.Center()
 		self.set_idle()
 
 		wx.App.Get().SetTopWindow(self)
@@ -101,6 +114,9 @@ class MainFrame(wx.Frame):
 	'''
 
 	def create_ui(self):
+		self.__wait = None
+		self.__disabler = None
+
 		self.create_menubar(self)
 		self.create_toolbars(self)
 		self.create_content(self)
@@ -253,6 +269,8 @@ class MainFrame(wx.Frame):
 			# Do the hard work in a background thread
 			t = threading.Thread(target=_t)
 			t.start()
+			self.set_busy()
+
 			
 	#def onFileSave(self, event):
 	#	pass
@@ -270,11 +288,6 @@ class MainFrame(wx.Frame):
 	def onFileExit(self, event):
 		self.onFileClose(None)
 		self.Close(True)
-		
-	def onClose(self, event):
-		wx.App.Get().SetTopWindow(None)
-		Log.Log("Shutting down...")
-		event.Skip()
 			
 
 	def onEditOptions(self, event):
@@ -286,6 +299,19 @@ class MainFrame(wx.Frame):
 
 	def onHelpAbout(self, event):
 		AboutDlg.AboutDlg(self).ShowModal()
+
+
+	'''
+	Random event handlers
+	'''
+
+	def onClose(self, event):
+		wx.App.Get().SetTopWindow(None)
+		cfg = wx.Config.Get()
+		cfg.window.pos_x, cfg.window.pos_y = self.Position
+		cfg.window.size_x, cfg.window.size_y = self.Size
+		Log.Log("Shutting down...")
+		event.Skip()
 
 
 	'''
@@ -330,15 +356,19 @@ class MainFrame(wx.Frame):
 
 		
 	'''
-	Mouse cursor handling
+	UI state handling
 	'''
 
 	def set_busy(self, update=True):
-		self._mouse("wait", update)
+		#self._mouse("wait", update)
+		if self.__wait is None:
+			self.__disabler = wx.WindowDisabler(True)
+			self.__wait = wx.BusyCursor()
 
 	def set_idle(self, update=True):
-		self._mouse("")
+		#self._mouse("")
 		self.update_statusbar()
+		self.__wait = self.__disabler = None
 
 	def _mouse(self, cursor, update=True):
 		#root.config(cursor=cursor)

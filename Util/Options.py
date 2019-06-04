@@ -42,10 +42,18 @@ class Options(FileConfig):
 		if num < 5:
 			# Create initial config
 			self.version = "v0.3-alpha"
+
+			self.window.pos_x = -1
+			self.window.pos_y = -1
+			self.window.size_x = -1
+			self.window.size_y = -1
+
 			self.deep_analysis.enabled = False
 			self.deep_analysis.asked = False
+
 			self.incident_report.enabled = False
 			self.incident_report.asked = False
+
 			self.Flush()
 			return
 		# Upgrade existing
