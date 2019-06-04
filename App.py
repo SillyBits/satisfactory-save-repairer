@@ -205,7 +205,7 @@ class MainFrame(wx.Frame):
 		self.onFileClose(None)
 
 		new_file = ''
-		path = wx.Config.Get().core.default_path
+		path = str(wx.Config.Get().core.default_path)
 		dlg = wx.FileDialog(self, _("Select savegame to load"), path, "",\
 							_("Savegames") + " (*.sav)|*.sav|" + _("All files") + " (*.*)|*.*",\
 							wx.FD_OPEN)
