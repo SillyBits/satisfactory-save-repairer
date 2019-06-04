@@ -224,24 +224,28 @@ class Property:
 	def __ne__(self, other): return self.get() != other
 	def __gt__(self, other): return self.get() >  other
 	def __ge__(self, other): return self.get() >= other
-	def __bool__(self):      return self.get() == True
+	#def __bool__(self):      return self.get() == True
 
 
 class FloatProperty(Property):
 	def get(self):			return Config.Get().ReadFloat (self.path, self.default or 0.0)
 	def set(self, value):	return Config.Get().WriteFloat(self.path, value)
+	def __float__(self):    return self.get()
 
 class BoolProperty(Property):
 	def get(self):			return Config.Get().ReadBool (self.path, self.default or False)
 	def set(self, value):	return Config.Get().WriteBool(self.path, value)
+	def __bool__(self):     return self.get()
 
 class IntProperty(Property):
 	def get(self):			return Config.Get().ReadInt (self.path, self.default or 0)
 	def set(self, value):	return Config.Get().WriteInt(self.path, value)
+	def __int__(self):      return self.get()
 
 class StringProperty(Property):
 	def get(self):			return Config.Get().Read (self.path, self.default or "")
 	def set(self, value):	return Config.Get().Write(self.path, value)
+	def __str__(self):      return self.get()
 
 
 SEPARATOR = "." # Using ":" has negative side effect of being escaped -> version\:s=...
