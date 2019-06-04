@@ -204,14 +204,8 @@ class MainFrame(wx.Frame):
 	def onFileOpen(self, event):
 		self.onFileClose(None)
 
-		if 'LOCALAPPDATA' in os.environ:
-			path = os.path.join(os.environ['LOCALAPPDATA'], "FactoryGame/Saved/SaveGames")
-		elif 'APPDATA' in os.environ:
-			path = os.path.join(os.environ['APPDATA'], "../Local/FactoryGame/Saved/SaveGames")
-		else:
-			path = "C:/"
-
 		new_file = ''
+		path = wx.Config.Get().core.default_path
 		dlg = wx.FileDialog(self, _("Select savegame to load"), path, "",\
 							_("Savegames") + " (*.sav)|*.sav|" + _("All files") + " (*.*)|*.*",\
 							wx.FD_OPEN)

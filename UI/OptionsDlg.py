@@ -49,6 +49,22 @@ class OptionsDlg(wx.Dialog):
 
 
 		'''
+		Default path
+		'''
+		group = wx.StaticBoxSizer(wx.VERTICAL, self, _("Default path"))
+		info = _("Location where your save games do reside") + ":"
+		group.Add(wx.StaticText(group.GetStaticBox(), label=info), flagsExpand)
+
+		self.__default_path = wx.TextCtrl(group.GetStaticBox(), value=str(cfg.core.default_path))
+		group.Add(self.__default_path, 1, wx.EXPAND)
+		self.__default_path_browse = wx.Button(parent=group.GetStaticBox(), label=_("Browse..."))
+		self.__default_path_browse.Bind(wx.EVT_BUTTON, self.__onDefaultPathBrowse)
+		group.Add(self.__default_path_browse, 0, wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
+		sizer.Add(group, flagsExpand)
+
+
+		'''
 		Deep analysis
 		'''
 		group = wx.StaticBoxSizer(wx.VERTICAL, self, _("Deep Analysis"))
@@ -97,14 +113,28 @@ class OptionsDlg(wx.Dialog):
 		#end of options
 
 
+	def __onDefaultPathBrowse(self, event):
+		with wx.DirDialog(self, message=_("Location where your save games do reside"), 
+			defaultPath=self.__default_path.Value,style=wx.DD_DEFAULT_STYLE) as dlg:
+			if dlg.ShowModal() == wx.ID_OK:
+				self.__default_path.Value = dlg.Path
+
+
 	def __onOk(self, event):
 		event.Skip()
 
 		cfg = wx.Config.Get()
+
+		cfg.core.default_path       = self.__default_path.Value
+
 		cfg.deep_analysis.enabled   = self.__deep_analysis__enabled.Value
 		cfg.deep_analysis.asked     = self.__deep_analysis__asked.Value
+
 		cfg.incident_report.enabled = self.__incident_report__enabled.Value
 		cfg.incident_report.asked   = self.__incident_report__asked.Value
+		
+		cfg.Flush()
+
 
 		self.EndModal(wx.OK)
 

@@ -11,7 +11,7 @@ Option handling, wrapping :class:`wx.FileConfig` to allow for hierarchical acces
 
 
 from os \
-	import path
+	import path, environ
 
 from wx \
 	import Config, ConfigBase, FileConfig, CONFIG_USE_LOCAL_FILE
@@ -39,7 +39,7 @@ class Options(FileConfig):
 
 	def __setup(self):
 		num = self.GetNumberOfEntries(True)
-		if num < 5:
+		if num < 10:
 			# Create initial config
 			self.version = "v0.3-alpha"
 
@@ -47,6 +47,17 @@ class Options(FileConfig):
 			self.window.pos_y = -1
 			self.window.size_x = -1
 			self.window.size_y = -1
+
+			subpath = path.join("FactoryGame", "Saved", "SaveGames")
+			if 'LOCALAPPDATA' in environ:
+				def_path = path.join(environ['LOCALAPPDATA'], subpath)
+			elif 'APPDATA' in environ:
+				def_path = path.join(environ['APPDATA'], "..", "Local", subpath)
+			elif 'USERPROFILE' in environ:
+				def_path = path.join(environ['USERPROFILE'], "AppData", "Local", subpath)
+			else:
+				def_path = "C:\\"
+			self.core.default_path = def_path
 
 			self.deep_analysis.enabled = False
 			self.deep_analysis.asked = False
