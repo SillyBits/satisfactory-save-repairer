@@ -14,6 +14,8 @@ from wx.lib \
     import newevent
 
 
+import AppConfig
+
 from Savegame \
 	import Savegame, Property, Validator
 
@@ -26,8 +28,6 @@ from UI \
 
 class Application(wx.App):
 
-	__appname = "SatisfactorySaveChecker"
-	
 	def __init__(self):
 		self.__path = os.path.dirname(sys.argv[0])
 
@@ -42,11 +42,11 @@ class Application(wx.App):
 			self.__logfile = Log.InitLog(self.__appname, self.__path)
 		super().__init__(self.__logfile != None, filename=self.__logfile, useBestVisual=True)
 
-		self.AppName = self.__appname
+		self.AppName = AppConfig.APP_NAME
 
 		# Below should be dealt with in OnInit?
 
-		Options.Options(self.__appname, self.__path)
+		Options.Options(AppConfig.APP_NAME, self.__path)
 
 		Lang.Lang.load(None, os.path.join(self.__path, "Resources"))
 
@@ -70,9 +70,6 @@ class Application(wx.App):
 
 
 class MainFrame(wx.Frame):
-
-	#TITLE = "Satisfactory Savegame Repairer"
-	TITLE = "Satisfactory Savegame Checker"
 
 	currFile = None
 
@@ -387,7 +384,7 @@ class MainFrame(wx.Frame):
 	'''
 
 	def get_title(self, raw=False):
-		s = _(MainFrame.TITLE)
+		s = _(AppConfig.APP_TITLE)
 		if self.currFile and not raw:
 			s += " - " + self.currFile.Filename
 		return s

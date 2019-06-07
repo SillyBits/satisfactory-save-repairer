@@ -17,6 +17,8 @@ from wx \
 	import Config, ConfigBase, FileConfig, CONFIG_USE_LOCAL_FILE
 
 
+import AppConfig
+
 class Options(FileConfig):
 	"""
 	@param appname: Name of application, used to define name of .ini to process
@@ -41,7 +43,7 @@ class Options(FileConfig):
 		num = self.GetNumberOfEntries(True)
 		if num < 10:
 			# Create initial config
-			self.version = "v0.3-alpha"
+			self.version = AppConfig.CURR_VERSION
 
 			self.window.pos_x = -1
 			self.window.pos_y = -1
