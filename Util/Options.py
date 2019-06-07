@@ -19,6 +19,10 @@ from wx \
 
 import AppConfig
 
+from Util \
+	import Log
+
+
 class Options(FileConfig):
 	"""
 	@param appname: Name of application, used to define name of .ini to process
@@ -35,13 +39,19 @@ class Options(FileConfig):
 		self.__setup()
 
 
+	def has(self, name:str):
+		return self.__root.has(name)
+
+	def items(self):
+		return self.__root.items()
+
+
 	'''
 	Private implementation
 	'''
 
 	def __setup(self):
-		num = self.GetNumberOfEntries(True)
-		if num < 10:
+		if not self.has("version"):
 			# Create initial config
 			self.version = AppConfig.CURR_VERSION
 
@@ -67,10 +77,17 @@ class Options(FileConfig):
 			self.incident_report.enabled = False
 			self.incident_report.asked = False
 
-			self.Flush()
-			return
+			return self.Flush()
+
 		# Upgrade existing
-		#TODO:
+		vers = self.version
+
+		if vers == AppConfig.CURR_VERSION:
+			return # Already at current version
+
+		# Below only with v0.4-alpha being shipped			
+		#if vers == "v0.3-alpha":
+		#	#TODO:
 
 
 	def __getattr__(self, name:str):
@@ -97,6 +114,20 @@ class Container:
 		self.__load()
 
 
+	def has(self, name:str):
+		try:
+			if "/" in name:
+				n = name.split("/", 1)[0]
+				obj = object.__getattribute__(self, n)
+				if isinstance(obj, Container):
+					remain = name[len(n)+1:]
+					return obj.has(remain)
+			else:
+				obj = object.__getattribute__(self, name)
+			return isinstance(obj, (Container,Property))
+		except:
+			return False
+
 	def get(self, name:str, default):
 		if not name in self.__dict__:
 			return self.__create(name, default)
@@ -112,6 +143,16 @@ class Container:
 		if isinstance(obj, Property):
 			obj = obj.set(value)
 		return obj
+
+	def items(self):
+		childs = []
+		for name in self.__dict__:
+			obj = object.__getattribute__(self, name)
+			if isinstance(obj, (Container, Property)):
+				childs.append(obj)
+		# Sorting by path should also take care of actual hierarchy
+		childs.sort(key=lambda obj: obj.path)
+		return childs
 
 
 	'''
@@ -148,7 +189,7 @@ class Container:
 					t = STRING
 				path = self.__path + name + SEPARATOR + t
 
-			prop = TYPE_MAPPING[t](path)
+			prop = PROPTYPE_MAPPING[t](path)
 			self.__dict__[name] = prop
 
 			more, name, index = Config.Get().GetNextEntry(index)
@@ -183,21 +224,19 @@ class Container:
 			if name == new_group:
 				# We're done
 				return container
-			# More keys waiting
+			# More subs waiting
 			remain = name[len(new_group)+1:]
 			return container.__create(remain, value)
 
-		if isinstance(value, float):
-			t = FLOAT
-		elif isinstance(value, bool):
-			t = BOOL
-		elif isinstance(value, int):
-			t = INT
+		t = type(value)
+		if t in TYPE_MAPPING:
+			t = TYPE_MAPPING[t]
 		else:
+			Log.Log("Options: No mapping for type {} found, defaulting to STRING".format(t))
 			t = STRING
 
 		path = self.__path + name + SEPARATOR + t
-		prop = TYPE_MAPPING[t](path, value)
+		prop = PROPTYPE_MAPPING[t](path, value)
 		self.__dict__[name] = prop
 		return prop.set(value)
 
@@ -239,13 +278,16 @@ class Property:
 			s += " (default='{}')".format(self.default)
 		return s
 
-	def __lt__(self, other): return self.get() <  other
-	def __le__(self, other): return self.get() <= other
-	def __eq__(self, other): return self.get() == other
-	def __ne__(self, other): return self.get() != other
-	def __gt__(self, other): return self.get() >  other
-	def __ge__(self, other): return self.get() >= other
+	def __lt__(self, other): return self.get() <  self.__conv(other)
+	def __le__(self, other): return self.get() <= self.__conv(other)
+	def __eq__(self, other): return self.get() == self.__conv(other)
+	def __ne__(self, other): return self.get() != self.__conv(other)
+	def __gt__(self, other): return self.get() >  self.__conv(other)
+	def __ge__(self, other): return self.get() >= self.__conv(other)
 	#def __bool__(self):      return self.get() == True
+	
+	def __conv(self, other):
+		return other.get() if isinstance(other, Property) else other
 
 
 class FloatProperty(Property):
@@ -284,6 +326,13 @@ WX_MAPPING = {
 }
 
 TYPE_MAPPING = {
+	type(float): FLOAT,
+	type(bool) : BOOL,
+	type(int)  : INT,
+	type(str)  : STRING,
+}
+
+PROPTYPE_MAPPING = {
 	FLOAT : FloatProperty,
 	BOOL  : BoolProperty,
 	INT   : IntProperty,
