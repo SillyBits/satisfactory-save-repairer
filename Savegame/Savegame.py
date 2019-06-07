@@ -6,7 +6,7 @@ import os
 
 
 from Savegame \
-	import Property, Reader, Writer
+	import Property, PropertyDumper, Reader, Writer
 
 from Util \
 	import Log
@@ -78,6 +78,12 @@ class Savegame:
 			self.Header = Property.Header(self).read(reader)
 			self.__total = 1
 			self.__cb_read_update(reader, None, _("Header"))
+
+			# Writing header to log
+			dumper = PropertyDumper.Dumper(
+				lambda text: Log.Log(text, add_ts=False, add_newline=False))
+			dumper.Dump(self.Header)
+			dumper = None
 
 			self.Objects = []
 			count = reader.readInt()
