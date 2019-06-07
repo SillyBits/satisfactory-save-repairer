@@ -73,6 +73,7 @@
 
 	"Loading file ...": "Lade Spielstand ...",
 	"{:,d} / {:,d} bytes": "{:,d} / {:,d} bytes",
+	"Header": "Dateikopf",
 	"Done loading": "Spielstand geladen",
 
 	"Checking objects ...": "Überprüfe Objekte ...",
