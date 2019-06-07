@@ -87,8 +87,9 @@
 
 	"Generating report ...": "Erzeuge Bericht ...",
 	"Done generating": "Berichterzeugung abgeschlossen",
+	"Validated a total of {:,d} objects.": "Insgesamt {:,d} Objekte wurden überprüft.",
 	"No errors found": "Keine Fehler gefunden",
-	"A total of {} errors found!": "Insgesamt {} Fehler gefunden!",
+	"A total of {:,d} errors found!": "Insgesamt {:,d} Fehler gefunden!",
 
 	"<none>": "<leer>",	
 	" - ": " - ",

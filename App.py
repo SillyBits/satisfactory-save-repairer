@@ -271,39 +271,6 @@ class MainFrame(wx.Frame):
 
 
 	'''
-	Progress bar stuff
-	'''
-
-	def show_progressbar(self, maxval, cancelbtn=False):
-		if cancelbtn:
-			self.statusbar.SetFieldsCount(3, widths=(-1,-1,50))
-			self.statusbar.SetStatusStyles((wx.SB_SUNKEN,wx.SB_NORMAL,wx.SB_NORMAL))
-			rect = self.statusbar.GetFieldRect(2)
-			self.cancelbtn = wx.Button(parent=self.statusbar, label=_("Cancel"), \
-									pos=rect.Position, size=rect.Size)
-			self.Bind(wx.EVT_BUTTON, self.onProgressCancel, self.cancelbtn)
-			self.cancelbtn.Show()
-		else:
-			self.statusbar.SetFieldsCount(2, widths=(-1,-1))
-			self.statusbar.SetStatusStyles((wx.SB_SUNKEN,wx.SB_NORMAL))
-
-		rect = self.statusbar.GetFieldRect(1)
-		self.progressbar = wx.Gauge(parent=self.statusbar, range=maxval, \
-								pos=rect.Position, size=rect.Size, style=wx.GA_HORIZONTAL)
-		
-	def update_progressbar(self, newpos):
-		self.progressbar.SetValue(newpos)
-
-	def hide_progressbar(self):
-		self.progressbar.Hide()
-		del self.progressbar
-		self.progressbar = None
-		self.statusbar.SetFieldsCount(1, widths=(-1,))
-		self.statusbar.SetStatusStyles((wx.SB_SUNKEN,))
-		self.set_idle()
-
-
-	'''
 	Status bar handling
 	'''
 
@@ -402,16 +369,13 @@ class MainFrame(wx.Frame):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
 			self.update_statusbar(_("Generating report ..."))
-			self.show_progressbar(event.maxval)
 			
 		elif event.which == Callback.Callback.UPDATE:
 			if event.data:
 				self.infopanel.update(event.data, True)
-			self.update_progressbar(event.val)
 			
 		elif event.which == Callback.Callback.END:
 			self.update_statusbar(_("Done generating"))
-			self.hide_progressbar()
 			self.set_idle()
 			self.update_ui()
 	
@@ -432,11 +396,15 @@ class MainFrame(wx.Frame):
 		self.__results_count = 0
 		self.__indent = 0
 		self.__error_count = 0
-		
-		total = self.currFile.TotalElements		
+
+		total = self.currFile.TotalElements
 		self.__cb_results_start(total)
 		sleep(0.01)
 		
+
+		s = _("Validated a total of {:,d} objects.").format(total) + "\n"
+		Log.Log(s, add_ts=False, add_newline=False)
+		self.__cb_results_update(s)
 		for obj in self.currFile.Objects:
 			self.__show_results(obj)
 		
@@ -446,10 +414,11 @@ class MainFrame(wx.Frame):
 		if not self.__error_count:
 			s = "\n" + _("No errors found")
 		else:
-			s = "\n\n"+_("A total of {} errors found!").format(self.__error_count)
-		Log.Log(s, add_newline=False, add_ts=False)
+			s = "\n\n" + _("A total of {:,d} errors found!").format(self.__error_count)
+		Log.Log(s, add_ts=False)
 		self.__cb_results_update(s)
 		sleep(0.01)
+
 		self.__cb_results_end()
 
 	def __show_results(self, obj):
