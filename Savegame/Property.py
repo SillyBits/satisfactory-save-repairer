@@ -342,7 +342,11 @@ class Rotator(Vector):
 # 'Scale' is a pseudo-class and not contained, added for the 
 # validation step as different set of bounds must be used
 class Scale(Vector):
-	pass
+	@staticmethod
+	def from_Vector(vector):
+		inst = Scale(vector.Parent)
+		inst.X,inst.Y,inst.Z = vector.X,vector.Y,vector.Z
+		return inst
 
 class Box(Accessor):
 	def read(self, reader):
@@ -372,7 +376,16 @@ class LinearColor(Color):
 		return self
 
 class Transform(PropertyList):
-	pass
+	def read(self, reader):
+		obj = super().read(reader)
+		for prop in obj.Value:
+			if prop.Name == "Scale3D":
+				# Replace Vector instance with Scale, needed for validation!
+				prop.Value = Scale.from_Vector(prop.Value)
+				#Log.Log("** Replaced Vector with Scale for\n\t{}:{}"\
+				#	.format(self.Root, self.Parent), severity=Log.LOG_DEBUG)
+				break
+		return obj
 	
 class Quat(Accessor):
 	def read(self, reader):
