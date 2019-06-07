@@ -20,7 +20,7 @@ from Savegame \
 	import Savegame, Property, Validator
 
 from Util \
-	import Options, Callback, Lang, Log
+	import Options, Callback, Lang, Log, FileHistory
 
 from UI \
 	import OptionsDlg, AboutDlg, ChangelogDlg, TreeView, DetailsPanel, ProgressDlg
@@ -143,6 +143,8 @@ class MainFrame(wx.Frame):
 		#self.menu_file_save_as = _add(filemenu, _("Save &as..."), _("Saves changes into a different file"), self.onFileSaveAs)
 		self.menu_file_close = _add(filemenu, _("C&lose\tCtrl+W"), _("Closes save"), self.onFileClose)
 		filemenu.AppendSeparator()
+		self.filehistory = FileHistory.FileHistoryHandler(filemenu, self, self.onFileMRU)
+		filemenu.AppendSeparator()
 		_add(filemenu, _("E&xit"), _("Terminate program"), self.onFileExit, wx.ID_EXIT)
 
 		editmenu = wx.Menu()
@@ -215,6 +217,7 @@ class MainFrame(wx.Frame):
 			new_file = os.path.join(dlg.Directory, dlg.Filename)
 
 		if len(new_file) > 0 and os.path.isfile(new_file):
+			self.filehistory.add(new_file)
 			self.__load(new_file)
 			
 	#def onFileSave(self, event):
@@ -229,6 +232,10 @@ class MainFrame(wx.Frame):
 		#TODO: Check change state before closing
 		self.currFile = None
 		self.update_ui()
+
+	def onFileMRU(self, event):
+		filename = self.filehistory.get(event)
+		self.__load(filename)
 			
 	def onFileExit(self, event):
 		self.onFileClose(None)
@@ -255,6 +262,7 @@ class MainFrame(wx.Frame):
 		cfg = wx.Config.Get()
 		cfg.window.pos_x, cfg.window.pos_y = self.Position
 		cfg.window.size_x, cfg.window.size_y = self.Size
+		self.filehistory.destroy()
 		Log.Log("Shutting down...")
 		event.Skip()
 

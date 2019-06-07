@@ -77,6 +77,9 @@ class Options(FileConfig):
 			self.incident_report.enabled = False
 			self.incident_report.asked = False
 
+			for i in range(1, AppConfig.MAX_MRU+1):
+				self.mru.__setattr__("file{}".format(i), "")
+
 			return self.Flush()
 
 		# Upgrade existing

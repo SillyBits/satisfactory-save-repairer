@@ -4,6 +4,7 @@
 	"&File": "&Datei",
 	"&Open...\tCtrl+O": "Ö&ffnen...\tCtrl+O",
 	"Opens a save game": "Öffnet einen Spielstand",
+	"Recently &used": "Zuletzt &geöffnet",
 	"C&lose\tCtrl+W": "Sch&ließen\tCtrl+W",
 	"Closes save": "Schließt den derzeit geöffneten Spielstand",
 	"E&xit": "Be&enden",
