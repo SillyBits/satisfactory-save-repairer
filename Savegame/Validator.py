@@ -118,10 +118,10 @@ class Validator:
 		if val is None or val == math.inf or val == math.nan:
 			return False
 		limit = lowerbounds or Validator.LOWER_BOUND
-		if val < limit: # val <= limit:
+		if val < limit:
 			return False
 		limit = upperbounds or Validator.UPPER_BOUND
-		if val > limit: # val >= limit:
+		if val > limit:
 			return False
 		return True
 		
@@ -130,8 +130,6 @@ class Validator:
 		if not (Validator.__is_valid(a, lowerbounds, upperbounds) and \
 				Validator.__is_valid(b, lowerbounds, upperbounds) and \
 				Validator.__is_valid(c, lowerbounds, upperbounds)):
-			#obj.AddError("Invalid {}: {} | {} | {}"\
-			#		.format(obj.TypeName, a, b, c))
 			Validator.__add_error(obj, 
 				"{} | {} | {}".format(a, b, c))
 			return False
@@ -143,8 +141,6 @@ class Validator:
 				Validator.__is_valid(b, lowerbounds, upperbounds) and \
 				Validator.__is_valid(c, lowerbounds, upperbounds) and \
 				Validator.__is_valid(d, lowerbounds, upperbounds)):
-			#obj.AddError("Invalid {}: {} | {} | {} | {}"\
-			#		.format(obj.TypeName, a, b, c, d))
 			Validator.__add_error(obj, 
 				"{} | {} | {} | {}".format(a, b, c, d))
 			return False
@@ -228,36 +224,19 @@ class Validator:
 			return Validator.__v_3(obj, obj.A,obj.B,obj.C)
 		return Validator.__v_4(obj, obj.A,obj.B,obj.C,obj.D)
 
-	'''
-	def __v_Actor(self, obj):
-		outcome = True
-		if obj.NeedTransform:
-			if not self.__v_Quat(obj.Rotation):
-				#obj.AddError("Invalid " + obj.Rotation.TypeName)
-				Validator.__add_error(obj, _("Property") + " 'Rotation'")
-				outcome = False
-			if not self.__v_Vector(obj.Translate):
-				#obj.AddError("Invalid " + obj.Translate.TypeName)
-				Validator.__add_error(obj, _("Property") + " 'Translate'")
-				outcome = False
-			# For now, we print negative scales as error
-			if not self.__v_Vector(obj.Scale, Validator.LOWER_SCALE):
-				#obj.AddError("Invalid " + obj.Scale.TypeName)
-				Validator.__add_error(obj, _("Property") + " 'Scale'")
-				outcome = False
-		return outcome
-	-> Replaced by introducing a pseudo-class 'Scale', see __v_Scale above.
-	'''
-
 
 	'''
-	Most validation can be done the abstract way, but a few do need special 
-	handling, e.g. Actor with using Vector for both Rot/Trans and Scale and
-	Scale needs different bounds!
-	Might be doable by adding a pseudo-class in between? -> Scale(Vector)
-	Added this class and removed __v_Actor from list
+	Most validation can be done the abstract way, but a few will need special 
+	handling which is being dealt with by adding pseudo-classes in between which
+	can then be referenced below. For example Actor.Scale, which uses class 
+	'Scale' instead of 'Vector' and class 'Scale' being a sub-class of 'Vector'.
 	'''
 	VALIDATORS = {
+		#'str':					__v_str,
+		#'byte':					__v_byte,
+		#'bool':					__v_bool,
+		#'float':				__v_float,
+
 		#'Property': 			__v_Property,
 		'PropertyList': 		__v_PropertyList,
 		'BoolProperty': 		__v_BoolProperty,

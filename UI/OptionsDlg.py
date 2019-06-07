@@ -24,11 +24,11 @@ class OptionsDlg(wx.Dialog):
 
 		btns = wx.BoxSizer(wx.HORIZONTAL)
 		btns.AddStretchSpacer()
-		self.__ok = wx.Button(parent=self, label=_("Save"), size=wx.DefaultSize, id=wx.ID_OK)
+		self.__ok = wx.Button(parent=self, label=_("Save"), id=wx.ID_OK)
 		self.__ok.Bind(wx.EVT_BUTTON, self.__onOk)
 		btns.Add(self.__ok, 0, wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
 		btns.AddSpacer(5)
-		self.__cancel = wx.Button(parent=self, label=_("Cancel"), size=wx.DefaultSize, id=wx.ID_CANCEL)
+		self.__cancel = wx.Button(parent=self, label=_("Cancel"), id=wx.ID_CANCEL)
 		btns.Add(self.__cancel, 0, wx.FIXED_MINSIZE|wx.ALIGN_CENTER)
 		#btns.AddStretchSpacer()
 		btns.AddSpacer(5)

@@ -29,11 +29,13 @@ from UI \
 class Application(wx.App):
 
 	def __init__(self):
+		#TODO: Find other means of discovering path, will fail if started, for example,
+		#      using cmd.exe and some relative path.
 		self.__path = os.path.dirname(sys.argv[0])
 
 		if 'SSR_DEBUG' in os.environ:
 			# For development only!
-			# -> Let IDE show messages in its output pane
+			# -> Let IDE show messages in output pane
 			#super().__init__(False, useBestVisual=True)
 			self.__logfile = None
 		else:
@@ -127,8 +129,8 @@ class MainFrame(wx.Frame):
 		self.create_statusbar(self)
 
 	def create_menubar(self, parent):
-		self.menuBar = wx.MenuBar()
-		self.SetMenuBar(self.menuBar)
+		self.menubar = wx.MenuBar()
+		self.SetMenuBar(self.menubar)
 
 		def _add(menu, label, tooltip=None, func=None, menuid=wx.ID_ANY):
 			item = menu.Append(menuid, label, tooltip)
@@ -137,7 +139,7 @@ class MainFrame(wx.Frame):
 			return item
 
 		filemenu = wx.Menu()
-		self.menuBar.Append(filemenu, _("&File"))
+		self.menubar.Append(filemenu, _("&File"))
 		self.menu_file_open = _add(filemenu, _("&Open...\tCtrl+O"), _("Opens a save game"), self.onFileOpen)
 		#self.menu_file_save = _add(filemenu, _("&Save\tCtrl+S"), _("Saves changes"), self.onFileSave)
 		#self.menu_file_save_as = _add(filemenu, _("Save &as..."), _("Saves changes into a different file"), self.onFileSaveAs)
@@ -148,11 +150,11 @@ class MainFrame(wx.Frame):
 		_add(filemenu, _("E&xit"), _("Terminate program"), self.onFileExit, wx.ID_EXIT)
 
 		editmenu = wx.Menu()
-		self.MenuBar.Append(editmenu, _("E&dit"))
+		self.menubar.Append(editmenu, _("E&dit"))
 		_add(editmenu, _("&Options..."), _("Opens options dialog"), self.onEditOptions)
 		
 		helpmenu = wx.Menu()
-		self.menuBar.Append(helpmenu, _("&Help"))
+		self.menubar.Append(helpmenu, _("&Help"))
 		_add(helpmenu, _("&Changelog..."), _("Show changelog"), self.onHelpChangelog)
 		_add(helpmenu, _("&About..."), _("Informations about this program"), self.onHelpAbout, wx.ID_ABOUT)
 
@@ -230,6 +232,8 @@ class MainFrame(wx.Frame):
 		#self.treeview.DeleteAllItems()
 		self.update_panel("")
 		#TODO: Check change state before closing
+		#if has_changes:
+		#	#...
 		self.currFile = None
 		self.update_ui()
 
@@ -283,21 +287,12 @@ class MainFrame(wx.Frame):
 	'''
 
 	def set_busy(self, update=True):
-		#self._mouse("wait", update)
 		if self.__wait is None:
 			self.__disabler = wx.WindowDisabler(True)
 			self.__wait = wx.BusyCursor()
 
 	def set_idle(self, update=True):
-		#self._mouse("")
-		self.update_statusbar()
 		self.__wait = self.__disabler = None
-
-	def _mouse(self, cursor, update=True):
-		#root.config(cursor=cursor)
-		#if update:
-		#	Tk.update(root)
-		pass
 
 
 	'''

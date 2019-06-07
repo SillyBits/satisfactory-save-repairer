@@ -48,8 +48,8 @@ class Accessor:
 					continue # Skip callables
 				keys.append(member)
 			Accessor.__keys[t] = keys
-			Log.Log("** New mapping for type {}\n   -> {}".format(t, keys), 
-						severity=Log.LOG_DEBUG)
+			#Log.Log("** New mapping for type '{}'\n-> {}".format(t, keys), 
+			#	severity=Log.LOG_DEBUG)
 		return Accessor.__keys[t]
 	
 	"""
@@ -193,14 +193,14 @@ class Property(Accessor):
 
 	@staticmethod
 	def raise_error(pos, msg):
-		raise "ERROR at pos {}: {}".format(pos, msg)
+		raise "ERROR at pos {:,d}: {}".format(pos, msg)
 		#raise Property.PropertyReadException(reader, msg) 		
 
 		
 	class PropertyReadException(Exception):
 		def __init__(self, reader, msg):
 			self.reader = reader
-			self.message = "[{}@{}] "\
+			self.message = "[{}@{:,d}] "\
 				.format(os.path.basename(reader.Filename), reader.PrevPos) + msg
 				
 		def __str__(self, *args, **kwargs):

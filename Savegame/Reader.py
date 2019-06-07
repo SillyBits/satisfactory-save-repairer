@@ -104,7 +104,7 @@ class ReaderBase:
 	class ReadException(Exception):
 		def __init__(self, reader, msg):
 			self.reader = reader
-			self.message = "[{}@{}] "\
+			self.message = "[{}@{:,d}] "\
 				.format(reader.Name, reader.PrevPos) + msg
 
 		def __str__(self, *args, **kwargs):
@@ -140,7 +140,7 @@ class ReaderBase:
 			vals.append(v[0])
 		if len(vals) != length:
 			raise ReaderBase.ReadError(self, 
-				"Read {} out of requested {}".format(len(vals), length))
+				"Read {:,d} out of requested {:,d}".format(len(vals), length))
 		self.__pos += total
 		self.__cb_update()
 		return vals

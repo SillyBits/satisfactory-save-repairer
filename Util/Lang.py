@@ -15,6 +15,12 @@ from Util \
 	import Log
 
 
+"""
+TODO:
+Even if this .json format is ok now now, find some other format which is easy to maintain
+and also allows for pseudo-groups and comments to assist with translating stuff.
+"""
+ 
 class Lang:
 
 	LANG = None	
