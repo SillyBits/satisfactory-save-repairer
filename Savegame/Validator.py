@@ -16,20 +16,22 @@ class Validator:
 	def validate(self, callback):
 		self.__callback = callback
 
-		self.__count = 0
+		self.__total = 0
 		#self.__obj_map = {}
-		
-		self.__cb_start(self.__savegame.TotalElements)
-		
+
+		self.__cb_start(self.__savegame.TotalElements, _("Checking objects ..."), "")
+
 		outcome = True
 
 		for obj in self.__savegame.Objects:
+			self.__cb_update(None, str(obj))
 			outcome &= self.__check(obj)
 		
 		for obj in self.__savegame.Collected:
+			self.__cb_update(None, str(obj))
 			outcome &= self.__check(obj)
 
-		self.__cb_end(outcome)
+		self.__cb_end(outcome, _("Done checking"))
 
 
 
@@ -37,47 +39,59 @@ class Validator:
 	Private implementation
 	'''
 
-	def __cb_start(self, total):
-		if self.__callback: self.__callback.start(total)
-		
-	def __cb_update(self):
-		self.__count += 1
-		if self.__callback: self.__callback.update(self.__count)
-		
-	def __cb_end(self, state):
-		if self.__callback: self.__callback.end(state)
+	def __cb_start(self, total, status=None, info=None):
+		if self.__callback: 
+			self.__callback.start(total, status=status, info=info)
+
+	def __cb_update(self, status=None, info=None):
+		if self.__callback: 
+			self.__callback.update(self.__total, status=status, info=info)
+
+	def __cb_end(self, state, status=None, info=None):
+		if self.__callback: 
+			self.__callback.end(state, status, info)
 
 
 	def __check(self, obj):
 		outcome = True
 
 		if isinstance(obj, Property.Accessor):
+			self.__total += 1
+			self.__cb_update()#TOO much -> None, str(obj))
 			t = obj.TypeName
 			if t in Validator.VALIDATORS:
 				outcome &= Validator.VALIDATORS[t](self, obj)
 
-			childs = obj.Childs
-			if childs:
-				outcome &= self.__check_recurs(childs)
+			outcome &= self.__check_recurs(obj, obj.Childs)
 			
 			if not outcome:
 				obj.AddError(_("[{}] has one or more errors").format(obj.TypeName))
-		
-			self.__cb_update()
+
+		#elif isinstance(obj, (list,dict)):
+		#	# Just for keeping counter consistent
+		#	self.__total += len(obj)
+		#elif obj is None or isinstance(obj, (str,int,float)):
+		#	# Just for keeping counter consistent
+		#	self.__total += 1
 
 		return outcome
 	
-	def __check_recurs(self, childs):
+	def __check_recurs(self, parent, childs):
 		outcome = True
 		
-		for name in childs:
-			sub = childs[name]
+		for name,prop in childs.items():
+			if prop is None:
+				continue
+			#self.__total += 1
 
-			if isinstance(sub, (list,dict)):
-				for obj in sub:
+			if isinstance(prop, (list,dict)):
+				self.__total += 1
+				for obj in prop:
 					outcome &= self.__check(obj)
+			#elif isinstance(sub, Property.Accessor):
 			else:
-				outcome &= self.__check(sub)
+				#self.__total += 1
+				outcome &= self.__check(prop)
 
 		return outcome
 
