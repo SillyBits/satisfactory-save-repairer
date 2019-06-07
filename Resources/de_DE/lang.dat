@@ -17,7 +17,9 @@
 	"&About...": "Ü&ber...",
 	"Informations about this program": "Informationen über dieses Programm",
 
+	"Please wait...": "Bitte warten...",
 	"Ready ...": "Bereit ...",
+	"Stopping...": "Beende...",
 
 	"Options": "Optionen",
 	"Save": "Speichern",
@@ -70,9 +72,11 @@
 	"All files": "Alle Dateien",
 
 	"Loading file ...": "Lade Spielstand ...",
+	"{:,d} / {:,d} bytes": "{:,d} / {:,d} bytes",
 	"Done loading": "Spielstand geladen",
 
 	"Checking objects ...": "Überprüfe Objekte ...",
+	"{:,d} / {:,d} objects": "{:,d} / {:,d} Objekte",
 	"Done checking": "Überprüfung abgeschlossen",
 	"Invalid value(s) for [{}]": "Ungültiger Wert für [{}]",
 	"Invalid value(s) for {}": "Ungültiger Wert für {}",

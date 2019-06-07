@@ -6,7 +6,7 @@ from wx.lib \
     import newevent
 
 
-
+#Deprecated:
 class Callback:
 	"""
     Provides some callback object to deal with messaging over threads and

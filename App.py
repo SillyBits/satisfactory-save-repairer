@@ -23,7 +23,7 @@ from Util \
 	import Options, Callback, Lang, Log
 
 from UI \
-	import OptionsDlg, AboutDlg, ChangelogDlg, TreeView, DetailsPanel
+	import OptionsDlg, AboutDlg, ChangelogDlg, TreeView, DetailsPanel, ProgressDlg
 
 
 class Application(wx.App):
@@ -39,7 +39,7 @@ class Application(wx.App):
 		else:
 			# For distribution only!
 			# -> Create log file, and rename existing one as backup
-			self.__logfile = Log.InitLog(self.__appname, self.__path)
+			self.__logfile = Log.InitLog(AppConfig.APP_NAME, self.__path)
 		super().__init__(self.__logfile != None, filename=self.__logfile, useBestVisual=True)
 
 		self.AppName = AppConfig.APP_NAME
@@ -206,8 +206,6 @@ class MainFrame(wx.Frame):
 	'''
 		
 	def onFileOpen(self, event):
-		self.onFileClose(None)
-
 		new_file = ''
 		path = str(wx.Config.Get().core.default_path)
 		dlg = wx.FileDialog(self, _("Select savegame to load"), path, "",\
@@ -215,61 +213,9 @@ class MainFrame(wx.Frame):
 							wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
 			new_file = os.path.join(dlg.Directory, dlg.Filename)
-		
+
 		if len(new_file) > 0 and os.path.isfile(new_file):
-			self.currFile = Savegame.Savegame(new_file)
-			self.update_ui()
-
-			#TODO:
-			#- Close current file (prompting for unsaved changes if any)
-			#- Delete tree before starting
-			#- Disable UI until done
-			
-			def _t():
-				# First of all, load da save			
-				Log.Log("Loading file:\n  -> " + new_file)
-				l_callback = Callback.Callback(self, self.loader_callback)
-				self.currFile.load(l_callback)
-				sleep(0.0001)
-				del l_callback
-				sleep(0.0001)
-				Log.Log("Finished loading")
-				# Next up, check for errors
-				Log.Log("Validating objects")
-				v_callback = Callback.Callback(self, self.checker_callback, 0)
-				validator = Validator.Validator(self.currFile)
-				validator.validate(v_callback)
-				sleep(0.0001)
-				del validator
-				del v_callback
-				sleep(0.0001)
-				Log.Log("Finished validating")
-				'''
-				# Finally, present some tree contents
-				Log.Log("Building tree")
-				b_callback = Callback.Callback(self, self.builder_callback, 0)
-				self.treeview.setup(self.currFile, b_callback)
-				sleep(0.0001)
-				del b_callback
-				sleep(0.0001)
-				Log.Log("Finished building tree")
-				'''
-				Log.Log("Creating report")
-				r_callback = Callback.Callback(self, self.result_callback, 0)
-				self.show_results(r_callback)
-				sleep(0.0001)
-				del r_callback
-				sleep(0.0001)				
-				Log.Log("Finished reporting")
-				# Before exiting, send an update request
-				#self.update_ui()
-				wx.PostEvent(self, self.__update_event_class())
-
-			# Do the hard work in a background thread
-			t = threading.Thread(target=_t)
-			t.start()
-			self.set_busy()
-
+			self.__load(new_file)
 			
 	#def onFileSave(self, event):
 	#	pass
@@ -526,6 +472,65 @@ class MainFrame(wx.Frame):
 				self.__show_results(sub)
 		
 		self.__indent -= 1
+
+
+	'''
+	Methods
+	'''
+		
+	def __load(self, filename):
+		#TODO:
+		#- Close current file (prompting for unsaved changes if any)
+		#- Delete tree before starting
+		#- Disable UI until done
+
+		self.onFileClose(None)
+
+		self.currFile = Savegame.Savegame(filename)
+
+		callback = ProgressDlg.ProgressDlg(self, _("Loading save"))
+		self.set_busy()
+
+
+		def _t():
+
+			# First of all, load da save			
+			Log.Log("Loading file:\n-> " + filename)
+			callback.SetCountsFormat(_("{:,d} / {:,d} bytes"))
+			self.currFile.load(callback)
+			Log.Log("Finished loading")
+
+			# Next up, check for errors
+			Log.Log("Validating objects")
+			callback.SetCountsFormat(_("{:,d} / {:,d} objects"))
+			validator = Validator.Validator(self.currFile)
+			validator.validate(callback)
+			del validator
+			Log.Log("Finished validating")
+
+			# Finally, present some tree contents, 
+			# or report if we're in checking-only mode
+			if False:#SHOW_TREE:
+				Log.Log("Building tree")
+				self.treeview.setup(self.currFile, callback)
+				Log.Log("Finished building tree")
+			else:
+				Log.Log("Creating report")
+				r_callback = Callback.Callback(self, self.result_callback, 0)
+				self.show_results(r_callback)
+				del r_callback
+				Log.Log("Finished reporting")
+
+			# Before exiting, send an update request
+			wx.PostEvent(self, self.__update_event_class())
+			# ... and instruct progress dialog to destroy itself
+			callback.destroy()
+
+
+		# Do the hard work in a background thread
+		t = threading.Thread(target=_t)
+		t.start()
+
 
 	def __check_first_time_options(self):
 
