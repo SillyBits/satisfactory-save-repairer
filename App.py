@@ -33,7 +33,7 @@ class Application(wx.App):
 		#      using cmd.exe and some relative path.
 		self.__path = os.path.dirname(sys.argv[0])
 
-		if 'SSR_DEBUG' in os.environ:
+		if AppConfig.DEBUG:
 			# For development only!
 			# -> Let IDE show messages in output pane
 			#super().__init__(False, useBestVisual=True)

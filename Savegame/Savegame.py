@@ -5,6 +5,8 @@ Savegame class
 import os
 
 
+import AppConfig
+
 from Savegame \
 	import Property, PropertyDumper, Reader, Writer
 
@@ -131,16 +133,20 @@ class Savegame:
 
 		except Property.Property.PropertyReadException as exc:
 			print(exc)
-			raise
+			if AppConfig.DEBUG: 
+				raise
+
 		except Reader.ReaderBase.ReadException as exc:
 			print(exc)
-			raise
-			
+			if AppConfig.DEBUG: 
+				raise
+
 		except Exception as exc:  
 			print("Catched an exception while reading somewhere around pos {:,d}".format(reader.Pos))
 			print(exc)
-			raise
-		
+			if AppConfig.DEBUG: 
+				raise
+
 		finally:
 			#self.__update_totals() -> Now done while loading
 			self.__cb_read_end(reader)

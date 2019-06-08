@@ -2,6 +2,10 @@
 Static configs for application
 """
 
+from os import environ
+DEBUG = True and "SSR_DEBUG" in environ
+#DEBUG = False
+
 #APP_NAME = "SatisfactorySaveRepairer"
 #APP_TITLE = "Satisfactory Savegame Repairer"
 APP_NAME = "SatisfactorySaveChecker"
