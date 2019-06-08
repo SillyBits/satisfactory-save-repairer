@@ -2,7 +2,8 @@
 Savegame class
 '''
 
-import os
+from os \
+	import path 
 
 
 import AppConfig
@@ -37,7 +38,7 @@ class Savegame:
 	
 	@property
 	def Filename(self):
-		return os.path.basename(self.__filename)
+		return path.basename(self.__filename)
 	
 	#@property
 	#def FilePath(self):

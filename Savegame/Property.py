@@ -1,5 +1,6 @@
 
-import os
+from os \
+	import path
 
 
 from Util \
@@ -201,7 +202,7 @@ class Property(Accessor):
 		def __init__(self, reader, msg):
 			self.reader = reader
 			self.message = "[{}@{:,d}] "\
-				.format(os.path.basename(reader.Filename), reader.PrevPos) + msg
+				.format(path.basename(reader.Filename), reader.PrevPos) + msg
 				
 		def __str__(self, *args, **kwargs):
 			return self.message + "\n" + Exception.__str__(self, *args, **kwargs)

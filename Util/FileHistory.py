@@ -3,9 +3,6 @@
 from wx \
 	import Menu, FileHistory, Config, EVT_MENU_RANGE
 
-from wx.lib \
-	import newevent
-
 
 import AppConfig
 
