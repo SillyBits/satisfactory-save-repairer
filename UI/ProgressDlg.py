@@ -185,7 +185,7 @@ class ProgressDlg(wx.Dialog):
 	'''
 	THREAD: Main
 	'''
-	def __onStart(self, maxval, status, info):
+	def onStart(self, maxval, status, info):
 		self.__maxval = maxval
 		self.__gauge.SetValue(0)
 		self.__gauge.SetRange(self.__maxval)
@@ -193,14 +193,14 @@ class ProgressDlg(wx.Dialog):
 		if not self.IsShown():
 			self.Show()
 
-	def __onUpdate(self, val, status, info, data=None):
+	def onUpdate(self, val, status, info, data=None):
 		self.__update_ui(val, status, info)
 
-	def __onEnd(self, state, status, info):
+	def onEnd(self, state, status, info):
 		if self.IsShown():
 			self.Hide()
 
-	def __onDestroy(self):
+	def onDestroy(self):
 		wx.CallAfter(self.Close)
 
 
