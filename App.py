@@ -103,7 +103,7 @@ class MainFrame(wx.Frame):
 		
 		# Finally, update UI
 		self.update_ui()
-		#self.update_tree()
+		self.update_tree()
 
 		self.Show()
 		if pos == wx.DefaultPosition:
@@ -166,18 +166,20 @@ class MainFrame(wx.Frame):
 		self.statusbar = self.CreateStatusBar(style=wx.STB_DEFAULT_STYLE)
 
 	def create_content(self, parent):
-		'''
-		self.main_splitter = wx.SplitterWindow(parent=self, style=wx.SP_3D|wx.SP_NO_XP_THEME|wx.SP_LIVE_UPDATE)
-		self.main_splitter.SetSashGravity(0.5)
-		self.main_splitter.SetSashSize(5)
-		#self.infopane = wx.StaticText(parent=self.main_splitter, \
-		#							label="Hello there! I'm a placeholder :D", size=(300,600))
-		self.infopanel = DetailsPanel.DetailsPanel(self.main_splitter)
-		self.treeview = TreeView.TreeView(self.main_splitter, self.infopanel)
-		self.main_splitter.SplitVertically(self.treeview, self.infopanel, 0)
-		'''
-		self.infopanel = DetailsPanel.DetailsPanel(self)
-		self.infopanel.SetSize(size=self.ClientSize)
+		if AppConfig.SHOW_TREE:
+			self.main_splitter = wx.SplitterWindow(parent=self, style=wx.SP_3D|wx.SP_NO_XP_THEME|wx.SP_LIVE_UPDATE)
+			self.main_splitter.SetSashGravity(0.5)
+			self.main_splitter.SetSashSize(5)
+			#self.infopane = wx.StaticText(parent=self.main_splitter, \
+			#							label="Hello there! I'm a placeholder :D", size=(300,600))
+			self.infopanel = DetailsPanel.DetailsPanel(self.main_splitter)
+			self.treeview = TreeView.TreeView(self.main_splitter, self.infopanel, 
+											TreeView.TreeView.TYPE_BY_CLASSNAME)
+			self.main_splitter.SplitVertically(self.treeview, self.infopanel, 0)
+		else:
+			# Just some simple UI
+			self.infopanel = DetailsPanel.DetailsPanel(self)
+			self.infopanel.SetSize(size=self.ClientSize)
 
 
 
@@ -198,17 +200,25 @@ class MainFrame(wx.Frame):
 		
 		if not has_save:
 			self.update_panel("")
-	
+		else: #if self.currFile and self.currFile.Header:
+			self.infopanel.show_property(self.currFile.Header)
+
+		self.set_idle(False)
+
+	def update_tree(self):
+		if not AppConfig.SHOW_TREE:
+			return
+		#TODO: Not sure what to do here :D
+
 	def update_panel(self, text, append=False):
 		self.infopanel.update(text, append)
 
-			
 
 
 	'''
 	Menu handlers
 	'''
-		
+
 	def onFileOpen(self, event):
 		new_file = ''
 		path = str(wx.Config.Get().core.default_path)
@@ -221,10 +231,10 @@ class MainFrame(wx.Frame):
 		if len(new_file) > 0 and os.path.isfile(new_file):
 			self.filehistory.add(new_file)
 			self.__load(new_file)
-			
+
 	#def onFileSave(self, event):
 	#	pass
-			
+
 	#def onFileSaveAs(self, event):
 	#	pass
 			
@@ -310,56 +320,7 @@ class MainFrame(wx.Frame):
 	Callbacks
 	'''
 
-	def loader_callback(self, event):
-		if event.which == Callback.Callback.START:
-			self.set_busy()
-			self.update_statusbar(_("Loading file ..."))
-			self.show_progressbar(event.maxval)
-			
-		elif event.which == Callback.Callback.UPDATE:
-			self.update_progressbar(event.val)
-			
-		elif event.which == Callback.Callback.END:
-			self.update_statusbar(_("Done loading"))
-			self.hide_progressbar()
-			self.set_idle()
-			self.update_ui()
-
-	def checker_callback(self, event):
-		if event.which == Callback.Callback.START:
-			self.set_busy()
-			self.update_statusbar(_("Checking objects ..."))
-			self.show_progressbar(event.maxval)
-			
-		elif event.which == Callback.Callback.UPDATE:
-			self.update_progressbar(event.val)
-			
-		elif event.which == Callback.Callback.END:
-			self.update_statusbar(_("Done checking"))
-			self.hide_progressbar()
-			self.set_idle()
-			self.update_ui()
-
-	'''
-	def builder_callback(self, event):
-		if event.which == Callback.Callback.START:
-			self.set_busy()
-			self.update_statusbar(_("Populating tree ..."))
-			self.show_progressbar(event.maxval)
-			
-		elif event.which == Callback.Callback.UPDATE:
-			self.update_progressbar(event.val)
-			
-		elif event.which == Callback.Callback.END:
-			self.update_statusbar(_("Done populating"))
-			self.hide_progressbar()
-			self.set_idle()
-			self.update_ui()
-
-		# Done dealing with main frame, rest of duties is up to tree view itself
-		self.treeview.process_event(event)
-	'''	
-	# Instead of building tree structure, we're generating an ASCII-based report
+	# Generate an ASCII-based report
 	def result_callback(self, event):
 		if event.which == Callback.Callback.START:
 			self.set_busy()
@@ -460,7 +421,7 @@ class MainFrame(wx.Frame):
 
 		self.currFile = Savegame.Savegame(filename)
 
-		callback = ProgressDlg.ProgressDlg(self, _("Loading save"))
+		callback = ProgressDlg.ProgressDlg(self, _("Loading file ..."))
 		self.set_busy()
 
 
@@ -473,18 +434,19 @@ class MainFrame(wx.Frame):
 			Log.Log("Finished loading")
 
 			# Next up, check for errors
-			Log.Log("Validating objects")
-			callback.SetCountsFormat(_("{:,d} / {:,d} objects"))
-			validator = Validator.Validator(self.currFile)
-			validator.validate(callback)
-			del validator
-			Log.Log("Finished validating")
+			if AppConfig.VALIDATE:
+				Log.Log("Validating objects")
+				callback.SetCountsFormat(_("{:,d} / {:,d} objects"))
+				validator = Validator.Validator(self.currFile)
+				validator.validate(callback)
+				del validator
+				Log.Log("Finished validating")
 
 			# Finally, present some tree contents, 
 			# or report if we're in checking-only mode
-			if False:#SHOW_TREE:
+			if AppConfig.SHOW_TREE:
 				Log.Log("Building tree")
-				self.treeview.setup(self.currFile, callback)
+				self.treeview.setup(self.currFile)
 				Log.Log("Finished building tree")
 			else:
 				Log.Log("Creating report")
@@ -502,6 +464,10 @@ class MainFrame(wx.Frame):
 		# Do the hard work in a background thread
 		t = threading.Thread(target=_t)
 		t.start()
+
+
+	#def __save(self, filename):
+	#	pass
 
 
 	def __check_first_time_options(self):

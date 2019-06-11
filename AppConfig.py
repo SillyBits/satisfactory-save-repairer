@@ -13,6 +13,8 @@ APP_TITLE = "Satisfactory Savegame Checker"
 
 CURR_VERSION = "v0.3-alpha"
 
-SHOW_TREE = False
+SHOW_TREE = True
+
+VALIDATE = False
 
 MAX_MRU = 9

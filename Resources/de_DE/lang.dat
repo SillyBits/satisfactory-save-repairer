@@ -85,6 +85,8 @@
 	"Property": "Property",
 	"[{}] has one or more errors": "[{}] hat ein oder mehrere Fehler",
 
+	"Object tree": "Objektbaum",
+	"Building tree...": "Erzeuge Baumstruktur...",
 	"Generating report ...": "Erzeuge Bericht ...",
 	"Done generating": "Berichterzeugung abgeschlossen",
 	"Validated a total of {:,d} objects.": "Insgesamt {:,d} Objekte wurden überprüft.",

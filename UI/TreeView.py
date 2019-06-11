@@ -31,7 +31,7 @@ class TreeView(wx.TreeCtrl):
 		self.__curr_sel = None
 
 
-	def setup(self, savegame, callback):
+	def setup(self, savegame):
 		self.__savegame = savegame
 		self.__count = 0
 		self.__obj_map = {}
