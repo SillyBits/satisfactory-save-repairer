@@ -488,6 +488,9 @@ class ArrayProperty(Property):
 		return self
 	
 class ObjectProperty(Property):
+	def __str__(self):
+		return '[' + self.TypeName + '] ' + getSafeStr(self.PathName)
+
 	def read(self, reader, nullCheck=True):
 		if nullCheck:
 			self.checkNullByte(reader)
@@ -496,6 +499,9 @@ class ObjectProperty(Property):
 		return self
 	
 class EnumProperty(Property):
+	def __str__(self):
+		return '[' + self.TypeName + '] ' + getSafeStr(self.EnumName)
+
 	def read(self, reader):
 		self.EnumName = reader.readStr()
 		self.checkNullByte(reader)
@@ -558,9 +564,6 @@ class Entity(PropertyList):
 		return self
 
 class NamedEntity(Entity):
-	def __str__(self):
-		return "[" + self.TypeName + "] " + getSafeStr(self.PathName)
-
 	def read(self, reader, length):
 		last_pos = reader.Pos
 		self.LevelName = reader.readStr()

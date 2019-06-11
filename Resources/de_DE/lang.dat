@@ -87,6 +87,9 @@
 
 	"Object tree": "Objektbaum",
 	"Building tree...": "Erzeuge Baumstruktur...",
+	"Show...": "Anzeigen...",
+	"RGBA Image of size {} x {}": "RGBA-Bild mit Größe {} x {}",
+	
 	"Generating report ...": "Erzeuge Bericht ...",
 	"Done generating": "Berichterzeugung abgeschlossen",
 	"Validated a total of {:,d} objects.": "Insgesamt {:,d} Objekte wurden überprüft.",
