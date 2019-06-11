@@ -7,6 +7,7 @@ from wx.lib \
 
 
 #Deprecated:
+# Only one runner is using this still: Report generation ... remove this soonish
 class Callback:
 	"""
     Provides some callback object to deal with messaging over threads and

@@ -6,7 +6,7 @@ Handy GUI for dealing with corrupted Satisfactory saves.
 import sys
 import os
 import threading
-from time import sleep
+
 
 import wx
 
@@ -355,8 +355,6 @@ class MainFrame(wx.Frame):
 
 		total = self.currFile.TotalElements
 		self.__cb_results_start(total)
-		sleep(0.01)
-		
 
 		s = _("Validated a total of {:,d} objects.").format(total) + "\n"
 		Log.Log(s, add_ts=False, add_newline=False)
@@ -373,7 +371,6 @@ class MainFrame(wx.Frame):
 			s = "\n\n" + _("A total of {:,d} errors found!").format(self.__error_count)
 		Log.Log(s, add_ts=False)
 		self.__cb_results_update(s)
-		sleep(0.01)
 
 		self.__cb_results_end()
 
