@@ -122,12 +122,15 @@ class Dumper:
 		for name,val in prop.Childs.items():
 			if name == "Missing":
 				# This needs special handling, for now, might add a specialized class later
-				self.__add_line("  .Missing")
-				self.__push()
-				dump = Helper.dump_hex(val, indent=0)
-				for line in dump.splitlines():
-					self.__add_line(line)
-				self.__pop()
+				if val:
+					self.__add_line("  .Missing")
+					self.__push()
+					dump = Helper.dump_hex(val, indent=0)
+					for line in dump.splitlines():
+						self.__add_line(line)
+					self.__pop()
+				else:
+					self.__add_line("  .Missing = <empty>")
 			else:
 				simple = self.__is_simple(val)
 				if simple:
