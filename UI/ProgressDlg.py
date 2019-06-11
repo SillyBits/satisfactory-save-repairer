@@ -5,6 +5,9 @@ import wx
 from pubsub \
 	import pub
 
+from pubsub.core \
+	import Publisher
+
 
 """
 TODO:
@@ -79,6 +82,7 @@ class ProgressDlg(wx.Dialog):
 		if flags & ProgressDlg.CANCELLABLE:		
 			self.__cancel = wx.Button(parent=self, label=_("Cancel"), size=wx.DefaultSize) 
 			self.Bind(wx.EVT_BUTTON, self.__onCancel, self.__cancel)
+			self.__cancel.Disable() #TODO: Handler and such
 		else:
 			self.__cancel = None
 
@@ -112,10 +116,11 @@ class ProgressDlg(wx.Dialog):
 		self.__cancelled = False
 
 		# Listen to our "commands"
-		pub.subscribe(self.__onStart  , "S")
-		pub.subscribe(self.__onUpdate , "U")
-		pub.subscribe(self.__onEnd    , "E")
-		pub.subscribe(self.__onDestroy, "D")
+		self.__publisher = Publisher()
+		self.__publisher.subscribe(self.onStart  , "S")
+		self.__publisher.subscribe(self.onUpdate , "U")
+		self.__publisher.subscribe(self.onEnd    , "E")
+		self.__publisher.subscribe(self.onDestroy, "D")
 		# ... and prepare for unsubscription
 		self.Bind(wx.EVT_CLOSE, self.__onClose)
 
@@ -143,18 +148,18 @@ class ProgressDlg(wx.Dialog):
 	THREAD: Worker
 	'''
 	def start(self, maxval, status=None, info=None):
-		pub.sendMessage("S", maxval=maxval, status=status, info=info)
+		self.__publisher.sendMessage("S", maxval=maxval, status=status, info=info)
 
 	def update(self, val, data=None, status=None, info=None):
 		#TODO: Get rid of 'data' object
-		pub.sendMessage("U", val=val, status=status, info=info)
+		self.__publisher.sendMessage("U", val=val, status=status, info=info, data=data)
 		return not self.__cancelled
 
 	def end(self, state, status=None, info=None):
-		pub.sendMessage("E", state=state, status=status, info=info)
+		self.__publisher.sendMessage("E", state=state, status=status, info=info)
 
 	def destroy(self):
-		pub.sendMessage("D")
+		self.__publisher.sendMessage("D")
 
 
 	'''
@@ -169,10 +174,11 @@ class ProgressDlg(wx.Dialog):
 		event.Skip()
 
 	def __onClose(self, event):
-		pub.unsubscribe(self.__onStart  , "S")
-		pub.unsubscribe(self.__onUpdate , "U")
-		pub.unsubscribe(self.__onEnd    , "E")
-		pub.unsubscribe(self.__onDestroy, "D")
+		self.__publisher.unsubscribe(self.onStart  , "S")
+		self.__publisher.unsubscribe(self.onUpdate , "U")
+		self.__publisher.unsubscribe(self.onEnd    , "E")
+		self.__publisher.unsubscribe(self.onDestroy, "D")
+		self.__publisher = None
 		#event.Skip()		
 
 
